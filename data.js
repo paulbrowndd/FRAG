@@ -1,9 +1,9 @@
 /**
  * Node war stats by war date (ISO YYYY-MM-DD). Add a new top-level key for each day
- * you transcribe from a video. `outcome` drives the header badge (optional).
+ * you transcribe from a video. Optional `outcome` is metadata only (not shown on the site).
  *
  * Weekly / lifetime views sum most fields, take MAX for max kill streak and max cannon
- * distance, and sum time dead / time survived across included wars.
+ * distance, and sum time dead / time survived across included wars. Weeks are Sun–Sat (UTC).
  */
 window.NODE_WAR_DATA = {
   "2026-05-14": {

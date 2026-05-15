@@ -25,7 +25,6 @@
   const search = document.getElementById("search");
   const countEl = document.getElementById("count");
   const metaEl = document.getElementById("header-meta");
-  const badgeEl = document.getElementById("header-badge");
   const viewTabs = document.querySelectorAll("[data-view]");
   const dateSelect = document.getElementById("date-select");
   const weekSelect = document.getElementById("week-select");
@@ -35,7 +34,9 @@
 
   let currentView = VIEW.DAILY;
   let currentDate = "";
-  let currentWeekMonday = "";
+  let currentWeekSunday = "";
+  let sortKey = null;
+  let sortDir = "asc";
 
   function getWarData() {
     return window.NODE_WAR_DATA && typeof window.NODE_WAR_DATA === "object"
@@ -52,12 +53,11 @@
     return new Date(Date.UTC(y, m - 1, d));
   }
 
-  /** Monday (UTC) of the calendar week containing `iso` (ISO YYYY-MM-DD). */
-  function mondayOfWeekUTC(iso) {
+  /** Sunday (UTC) of the Sunday–Saturday week containing `iso` (ISO YYYY-MM-DD). */
+  function sundayOfWeekUTC(iso) {
     const dt = parseISOUTC(iso);
     const dow = dt.getUTCDay();
-    const diff = dow === 0 ? -6 : 1 - dow;
-    dt.setUTCDate(dt.getUTCDate() + diff);
+    dt.setUTCDate(dt.getUTCDate() - dow);
     return dt.toISOString().slice(0, 10);
   }
 
@@ -77,9 +77,9 @@
     });
   }
 
-  function formatWeekRangeLabel(mondayIso) {
-    const sun = addDaysUTC(mondayIso, 6);
-    return `${formatShortDate(mondayIso)} – ${formatShortDate(sun)}`;
+  function formatWeekRangeLabel(sundayIso) {
+    const saturday = addDaysUTC(sundayIso, 6);
+    return `${formatShortDate(sundayIso)} – ${formatShortDate(saturday)}`;
   }
 
   function parseGameNumber(s) {
@@ -215,127 +215,154 @@
       .sort((a, b) => a.familyName.localeCompare(b.familyName, undefined, { sensitivity: "base" }));
   }
 
-  function datesInWeek(data, mondayIso) {
-    return sortedDateKeys(data).filter((d) => mondayOfWeekUTC(d) === mondayIso);
+  function datesInWeek(data, sundayIso) {
+    return sortedDateKeys(data).filter((d) => sundayOfWeekUTC(d) === sundayIso);
   }
 
   function uniqueWeekStarts(data) {
     const keys = sortedDateKeys(data);
     const set = new Map();
     for (const d of keys) {
-      const m = mondayOfWeekUTC(d);
-      if (!set.has(m)) set.set(m, []);
-      set.get(m).push(d);
+      const sun = sundayOfWeekUTC(d);
+      if (!set.has(sun)) set.set(sun, []);
+      set.get(sun).push(d);
     }
     return Array.from(set.entries())
-      .map(([monday, dates]) => ({ monday, dates }))
-      .sort((a, b) => b.monday.localeCompare(a.monday));
+      .map(([sunday, dates]) => ({ sunday, dates }))
+      .sort((a, b) => b.sunday.localeCompare(a.sunday));
   }
 
-  function setBadge(outcome) {
-    badgeEl.classList.remove("badge--defeat", "badge--victory", "badge--draw", "badge--mixed", "badge--hidden");
-    const o = (outcome || "").toLowerCase();
-    if (!o) {
-      badgeEl.classList.add("badge--hidden");
-      badgeEl.textContent = "";
-      return;
-    }
-    if (o === "victory") {
-      badgeEl.classList.add("badge--victory");
-      badgeEl.textContent = "Victory";
-      return;
-    }
-    if (o === "defeat") {
-      badgeEl.classList.add("badge--defeat");
-      badgeEl.textContent = "Defeat";
-      return;
-    }
-    if (o === "draw") {
-      badgeEl.classList.add("badge--draw");
-      badgeEl.textContent = "Draw";
-      return;
-    }
-    if (o === "mixed") {
-      badgeEl.classList.add("badge--mixed");
-      badgeEl.textContent = "Mixed week";
-      return;
-    }
-    badgeEl.classList.add("badge--mixed");
-    badgeEl.textContent = outcome;
+  function resetSort() {
+    sortKey = null;
+    sortDir = "asc";
   }
 
-  function weekOutcomeLabel(data, dateKeys) {
-    const outs = dateKeys.map((d) => (data[d].outcome || "").toLowerCase()).filter(Boolean);
-    if (!outs.length) return "";
-    const uniq = [...new Set(outs)];
-    if (uniq.length === 1) return uniq[0];
-    return "mixed";
+  function colDefByKey(key) {
+    return COLS.find((c) => c.key === key);
+  }
+
+  function cellSortValue(row, colDef) {
+    const v = row[colDef.key];
+    switch (colDef.key) {
+      case "familyName":
+        return String(v || "").toLowerCase();
+      case "timeDead":
+      case "timeSurvived":
+        return parseTimeToSeconds(v);
+      default:
+        if (colDef.type === "num") return Number(v) || 0;
+        if (colDef.type === "str") return parseGameNumber(v);
+        return String(v || "");
+    }
+  }
+
+  function compareSortValues(va, vb) {
+    if (typeof va === "number" && typeof vb === "number") {
+      if (va < vb) return -1;
+      if (va > vb) return 1;
+      return 0;
+    }
+    return String(va).localeCompare(String(vb), undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  function sortRowsInPlace(rows) {
+    if (!sortKey) return rows;
+    const col = colDefByKey(sortKey);
+    if (!col) return rows;
+    const nameCol = colDefByKey("familyName");
+    const mult = sortDir === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const va = cellSortValue(a, col);
+      const vb = cellSortValue(b, col);
+      let cmp = compareSortValues(va, vb);
+      if (cmp !== 0) return mult * cmp;
+      return compareSortValues(cellSortValue(a, nameCol), cellSortValue(b, nameCol));
+    });
+  }
+
+  function applyHeaderSortIndicators() {
+    thead.querySelectorAll(".th-sort-btn").forEach((btn) => {
+      const key = btn.getAttribute("data-sort-key");
+      const th = btn.closest("th");
+      const ind = btn.querySelector(".sort-ind");
+      if (!th || !ind) return;
+      th.removeAttribute("aria-sort");
+      ind.textContent = "";
+      if (sortKey === key) {
+        th.setAttribute("aria-sort", sortDir === "asc" ? "ascending" : "descending");
+        ind.textContent = sortDir === "asc" ? "▲" : "▼";
+      }
+    });
   }
 
   function renderHead() {
-    thead.innerHTML = COLS.map(
-      (c) =>
-        `<th class="${c.type === "text" ? "" : c.type}">${escapeHtml(c.label)}</th>`
-    ).join("");
+    thead.innerHTML = COLS.map((c) => {
+      const align = c.type === "text" ? "th--text" : "th--num";
+      const num = c.type === "text" ? "" : c.type;
+      return `<th class="th-sortable ${align}${num ? " " + num : ""}" scope="col">
+        <button type="button" class="th-sort-btn" data-sort-key="${escapeHtml(c.key)}" aria-label="Sort by ${escapeHtml(c.label)}">
+          <span class="th-sort-label">${escapeHtml(c.label)}</span>
+          <span class="sort-ind" aria-hidden="true"></span>
+        </button>
+      </th>`;
+    }).join("");
   }
 
   function getRowsForView() {
     const data = getWarData();
     const keys = sortedDateKeys(data);
-    if (!keys.length) return { rows: [], meta: "No data in NODE_WAR_DATA", badge: "" };
+    if (!keys.length) return { rows: [], meta: "No data in NODE_WAR_DATA" };
 
     if (currentView === VIEW.DAILY) {
       const dk = currentDate && data[currentDate] ? currentDate : keys[keys.length - 1];
       const day = data[dk];
       const rows = (day.rows || []).slice();
-      const outcome = day.outcome || "";
       return {
         rows,
         meta: `${formatShortDate(dk)} · Node war result`,
-        badge: outcome,
       };
     }
 
     if (currentView === VIEW.WEEKLY) {
       const weeks = uniqueWeekStarts(data);
-      const mon =
-        currentWeekMonday && weeks.some((w) => w.monday === currentWeekMonday)
-          ? currentWeekMonday
-          : weeks[0].monday;
-      const inWeek = datesInWeek(data, mon);
+      const sun =
+        currentWeekSunday && weeks.some((w) => w.sunday === currentWeekSunday)
+          ? currentWeekSunday
+          : weeks[0].sunday;
+      const inWeek = datesInWeek(data, sun);
       const rows = aggregateByFamily(data, inWeek);
-      const wk = weekOutcomeLabel(data, inWeek);
-      const meta = `Week ${formatWeekRangeLabel(mon)} · ${inWeek.length} war${
+      const meta = `Week ${formatWeekRangeLabel(sun)} · ${inWeek.length} war${
         inWeek.length === 1 ? "" : "s"
       } logged`;
-      return { rows, meta, badge: wk };
+      return { rows, meta };
     }
 
     const rows = aggregateByFamily(data, keys);
     return {
       rows,
       meta: `Lifetime · ${keys.length} day${keys.length === 1 ? "" : "s"} recorded`,
-      badge: "",
     };
   }
 
   function renderBody() {
-    const { rows, meta, badge } = getRowsForView();
+    const { rows, meta } = getRowsForView();
     metaEl.textContent = meta;
-    setBadge(badge);
 
     const q = (search.value || "").trim().toLowerCase();
-    const filtered = q
+    const total = rows.length;
+    let filtered = q
       ? rows.filter((r) => String(r.familyName).toLowerCase().includes(q))
-      : rows;
+      : rows.slice();
+    filtered = sortRowsInPlace(filtered);
 
     countEl.textContent =
-      filtered.length === rows.length
-        ? `${rows.length} players`
-        : `${filtered.length} of ${rows.length} players`;
+      filtered.length === total
+        ? `${total} players`
+        : `${filtered.length} of ${total} players`;
 
     if (!filtered.length) {
       tbody.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No matching family names.</td></tr>`;
+      applyHeaderSortIndicators();
       return;
     }
 
@@ -349,6 +376,8 @@
         return `<tr>${tds}</tr>`;
       })
       .join("");
+
+    applyHeaderSortIndicators();
   }
 
   function populateDateSelect() {
@@ -367,17 +396,17 @@
     const data = getWarData();
     const weeks = uniqueWeekStarts(data);
     weekSelect.innerHTML = weeks
-      .map(({ monday, dates }) => {
-        const label = `${formatWeekRangeLabel(monday)} (${dates.length} day${dates.length === 1 ? "" : "s"})`;
-        return `<option value="${escapeHtml(monday)}">${escapeHtml(label)}</option>`;
+      .map(({ sunday, dates }) => {
+        const label = `${formatWeekRangeLabel(sunday)} (${dates.length} day${dates.length === 1 ? "" : "s"})`;
+        return `<option value="${escapeHtml(sunday)}">${escapeHtml(label)}</option>`;
       })
       .join("");
     if (weeks.length) {
-      const mondays = weeks.map((w) => w.monday);
-      currentWeekMonday = mondays.includes(currentWeekMonday)
-        ? currentWeekMonday
-        : mondays[0];
-      weekSelect.value = currentWeekMonday;
+      const sundays = weeks.map((w) => w.sunday);
+      currentWeekSunday = sundays.includes(currentWeekSunday)
+        ? currentWeekSunday
+        : sundays[0];
+      weekSelect.value = currentWeekSunday;
     }
   }
 
@@ -390,6 +419,7 @@
   }
 
   function setView(view) {
+    resetSort();
     currentView = view;
     viewTabs.forEach((btn) => {
       const on = btn.getAttribute("data-view") === view;
@@ -413,9 +443,9 @@
       dateSelect.value = currentDate;
       const w = uniqueWeekStarts(data);
       if (w.length) {
-        currentWeekMonday = mondayOfWeekUTC(currentDate);
-        if (!w.some((x) => x.monday === currentWeekMonday)) currentWeekMonday = w[0].monday;
-        weekSelect.value = currentWeekMonday;
+        currentWeekSunday = sundayOfWeekUTC(currentDate);
+        if (!w.some((x) => x.sunday === currentWeekSunday)) currentWeekSunday = w[0].sunday;
+        weekSelect.value = currentWeekSunday;
       }
     }
 
@@ -429,11 +459,27 @@
     });
 
     weekSelect.addEventListener("change", function () {
-      currentWeekMonday = this.value;
+      currentWeekSunday = this.value;
       renderBody();
     });
 
     search.addEventListener("input", renderBody);
+
+    const tableEl = thead.closest("table");
+    tableEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".th-sort-btn");
+      if (!btn || !thead.contains(btn)) return;
+      const key = btn.getAttribute("data-sort-key");
+      if (!key) return;
+      if (sortKey === key) {
+        sortDir = sortDir === "asc" ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        // Name: A→Z first; stats: high→low first (then click again to flip).
+        sortDir = key === "familyName" ? "asc" : "desc";
+      }
+      renderBody();
+    });
 
     setView(VIEW.DAILY);
   }

@@ -12,7 +12,6 @@
       <header>
         <p class="meta" id="header-meta">Node war result</p>
         <h1>Guild roster &amp; stats</h1>
-        <span id="header-badge" class="badge badge--hidden" aria-live="polite"></span>
       </header>
 
       <div class="controls">
@@ -64,11 +63,12 @@
 
       <footer>
         Add each new video under a new <code>YYYY-MM-DD</code> key in <code>data.js</code>
-        (<code>NODE_WAR_DATA</code>). Set <code>outcome</code> to <code>victory</code>,
-        <code>defeat</code>, or <code>draw</code> for the daily badge. Weekly rolls up all
-        days whose week (Mon–Sun, UTC) matches the week you pick. Lifetime sums across every
-        logged day (max kill streak and max cannon distance use the best single war; time dead
-        and time survived add up across wars).
+        (<code>NODE_WAR_DATA</code>). Optional <code>outcome</code> is kept for your records
+        only (not shown on this page). Weekly rolls up all days whose week (Sun–Sat, UTC)
+        matches the week you pick. Lifetime sums across every logged day (max kill streak and
+        max cannon distance use the best single war; time dead and time survived add up across
+        Click any column header to sort (stats default to highest first; click again to
+        reverse). Family name defaults to A→Z, then Z→A.
       </footer>
     </div>
 
