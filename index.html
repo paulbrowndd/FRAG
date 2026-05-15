@@ -3,17 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Node War Result — 2026-5-14</title>
+    <title>Node war stats</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="bg-pattern" aria-hidden="true"></div>
     <div class="wrap">
       <header>
-        <p class="meta">2026-5-14 · Node war result</p>
+        <p class="meta" id="header-meta">Node war result</p>
         <h1>Guild roster &amp; stats</h1>
-        <span class="badge">Defeat</span>
+        <span id="header-badge" class="badge badge--hidden" aria-live="polite"></span>
       </header>
+
+      <div class="controls">
+        <div class="tabs" role="tablist" aria-label="View mode">
+          <button type="button" class="tab tab--active" data-view="daily" role="tab" aria-selected="true">
+            Daily
+          </button>
+          <button type="button" class="tab" data-view="weekly" role="tab" aria-selected="false">
+            Weekly
+          </button>
+          <button type="button" class="tab" data-view="lifetime" role="tab" aria-selected="false">
+            Lifetime
+          </button>
+        </div>
+
+        <div id="scope-row" class="scope-row">
+          <div id="date-field" class="field">
+            <label for="date-select">War date</label>
+            <select id="date-select"></select>
+          </div>
+          <div id="week-field" class="field" hidden>
+            <label for="week-select">Week</label>
+            <select id="week-select"></select>
+          </div>
+        </div>
+      </div>
 
       <div class="toolbar">
         <label class="search" for="search">
@@ -38,9 +63,12 @@
       </div>
 
       <footer>
-        Static site: edit <code>data.js</code> to change numbers or add rows. Open
-        <code>index.html</code> locally or host the folder on any static host (GitHub Pages,
-        Netlify, etc.).
+        Add each new video under a new <code>YYYY-MM-DD</code> key in <code>data.js</code>
+        (<code>NODE_WAR_DATA</code>). Set <code>outcome</code> to <code>victory</code>,
+        <code>defeat</code>, or <code>draw</code> for the daily badge. Weekly rolls up all
+        days whose week (Mon–Sun, UTC) matches the week you pick. Lifetime sums across every
+        logged day (max kill streak and max cannon distance use the best single war; time dead
+        and time survived add up across wars).
       </footer>
     </div>
 

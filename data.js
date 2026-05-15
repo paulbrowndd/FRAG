@@ -1,8 +1,14 @@
 /**
- * Node War result rows — edit this file to update the table.
- * Values are strings as shown in-game (e.g. "198.0K", "08:11").
+ * Node war stats by war date (ISO YYYY-MM-DD). Add a new top-level key for each day
+ * you transcribe from a video. `outcome` drives the header badge (optional).
+ *
+ * Weekly / lifetime views sum most fields, take MAX for max kill streak and max cannon
+ * distance, and sum time dead / time survived across included wars.
  */
-window.NODE_WAR_ROWS = [
+window.NODE_WAR_DATA = {
+  "2026-05-14": {
+    outcome: "defeat",
+    rows: [
   { familyName: "LordGrim", enemyKills: 2, deaths: 13, maxKillStreak: 1, damageDealt: "198.0K", damageTaken: "320.4K", ccHits: 63, hpHealed: "177.3K", allyHp: "24.3K", totalDamageToFort: "203.4K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "08:11", timeSurvived: "33:01" },
   { familyName: "Witchico", enemyKills: 6, deaths: 29, maxKillStreak: 2, damageDealt: "283.6K", damageTaken: "415.1K", ccHits: 47, hpHealed: "91.8K", allyHp: "19.2K", totalDamageToFort: "1.5M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "15:02", timeSurvived: "26:10" },
   { familyName: "Trooperr", enemyKills: 18, deaths: 19, maxKillStreak: 4, damageDealt: "631.8K", damageTaken: "347.2K", ccHits: 102, hpHealed: "145.4K", allyHp: "15.2K", totalDamageToFort: "5.4K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "07:52", timeSurvived: "33:20" },
@@ -42,4 +48,20 @@ window.NODE_WAR_ROWS = [
   { familyName: "Umbrella", enemyKills: 11, deaths: 24, maxKillStreak: 4, damageDealt: "256.5K", damageTaken: "449.3K", ccHits: 37, hpHealed: "178.9K", allyHp: "29.3K", totalDamageToFort: "361.0K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "12:24", timeSurvived: "28:48" },
   { familyName: "DrShortstuf", enemyKills: 6, deaths: 25, maxKillStreak: 2, damageDealt: "253.4K", damageTaken: "402.2K", ccHits: 20, hpHealed: "133.3K", allyHp: "47.4K", totalDamageToFort: "865.0K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "14:16", timeSurvived: "26:56" },
   { familyName: "Afary", enemyKills: 0, deaths: 3, maxKillStreak: 0, damageDealt: "1.5K", damageTaken: "47.0K", ccHits: 0, hpHealed: "16.8K", allyHp: "2.1K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "01:13", timeSurvived: "39:59" },
-];
+    ],
+  },
+};
+
+/*
+  Add another war day (same shape as above):
+
+  "2026-05-15": {
+    outcome: "victory",
+    rows: [
+      { familyName: "PlayerOne", enemyKills: 0, deaths: 0, maxKillStreak: 0,
+        damageDealt: "0", damageTaken: "0", ccHits: 0, hpHealed: "0", allyHp: "0",
+        totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0,
+        maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "00:00", timeSurvived: "00:00" },
+    ],
+  },
+*/

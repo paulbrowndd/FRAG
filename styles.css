@@ -71,9 +71,113 @@ header h1 {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.badge--hidden {
+  display: none;
+}
+
+.badge--defeat {
   background: rgba(196, 92, 92, 0.2);
   color: var(--lose);
-  border: 1px solid rgba(196, 92, 92, 0.45);
+  border-color: rgba(196, 92, 92, 0.45);
+}
+
+.badge--victory {
+  background: rgba(92, 196, 130, 0.18);
+  color: #7fd9a4;
+  border-color: rgba(92, 196, 130, 0.45);
+}
+
+.badge--draw {
+  background: rgba(154, 160, 166, 0.15);
+  color: var(--muted);
+  border-color: var(--border);
+}
+
+.badge--mixed {
+  background: rgba(201, 162, 39, 0.12);
+  color: var(--accent);
+  border-color: rgba(201, 162, 39, 0.4);
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.tab {
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text);
+  border-color: #3d4450;
+}
+
+.tab--active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #f0d78c;
+}
+
+.scope-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: min(100%, 280px);
+}
+
+.field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.field select {
+  width: 100%;
+  max-width: 360px;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.field select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .toolbar {
