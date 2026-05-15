@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Node war stats</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-pattern" aria-hidden="true"></div>
+    <div class="wrap">
+      <header>
+        <p class="meta" id="header-meta">Node war result</p>
+        <h1>Guild roster &amp; stats</h1>
+      </header>
+
+      <div class="controls">
+        <div class="tabs" role="tablist" aria-label="View mode">
+          <button type="button" class="tab tab--active" data-view="daily" role="tab" aria-selected="true">
+            Daily
+          </button>
+          <button type="button" class="tab" data-view="weekly" role="tab" aria-selected="false">
+            Weekly
+          </button>
+          <button type="button" class="tab" data-view="lifetime" role="tab" aria-selected="false">
+            Lifetime
+          </button>
+        </div>
+
+        <div id="scope-row" class="scope-row">
+          <div id="date-field" class="field">
+            <label for="date-select">War date</label>
+            <select id="date-select"></select>
+          </div>
+          <div id="week-field" class="field" hidden>
+            <label for="week-select">Week</label>
+            <select id="week-select"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <label class="search" for="search">
+          <span class="visually-hidden">Filter by family name</span>
+          <input
+            type="search"
+            id="search"
+            placeholder="Filter by family name…"
+            autocomplete="off"
+          />
+        </label>
+        <span id="count" class="count"></span>
+      </div>
+
+      <div class="table-scroll" role="region" aria-label="Node war statistics table">
+        <table>
+          <thead>
+            <tr id="thead"></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <footer>
+        Add each new video under a new <code>YYYY-MM-DD</code> key in <code>data.js</code>
+        (<code>NODE_WAR_DATA</code>). Optional <code>outcome</code> is kept for your records
+        only (not shown on this page). Weekly rolls up all days whose week (Sun–Sat, UTC)
+        matches the week you pick. Lifetime sums across every logged day (max kill streak and
+        max cannon distance use the best single war; time dead and time survived add up across
+        wars). Click any column header to sort; click again to reverse.
+      </footer>
+    </div>
+
+    <style>
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
