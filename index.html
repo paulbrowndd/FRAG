@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Node War Result — 2026-5-14</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-pattern" aria-hidden="true"></div>
+    <div class="wrap">
+      <header>
+        <p class="meta">2026-5-14 · Node war result</p>
+        <h1>Guild roster &amp; stats</h1>
+        <span class="badge">Defeat</span>
+      </header>
+
+      <div class="toolbar">
+        <label class="search" for="search">
+          <span class="visually-hidden">Filter by family name</span>
+          <input
+            type="search"
+            id="search"
+            placeholder="Filter by family name…"
+            autocomplete="off"
+          />
+        </label>
+        <span id="count" class="count"></span>
+      </div>
+
+      <div class="table-scroll" role="region" aria-label="Node war statistics table">
+        <table>
+          <thead>
+            <tr id="thead"></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <footer>
+        Static site: edit <code>data.js</code> to change numbers or add rows. Open
+        <code>index.html</code> locally or host the folder on any static host (GitHub Pages,
+        Netlify, etc.).
+      </footer>
+    </div>
+
+    <style>
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
