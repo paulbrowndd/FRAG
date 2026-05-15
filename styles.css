@@ -326,6 +326,37 @@ tbody td.str {
   font-size: 0.78rem;
 }
 
+tfoot td {
+  padding: 0.55rem 0.5rem;
+  border-top: 2px solid var(--accent);
+  border-bottom: none;
+  vertical-align: middle;
+  background: #252a33;
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+tfoot td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-left: 0.85rem;
+  font-weight: 700;
+  color: #f0d78c;
+  letter-spacing: 0.02em;
+  background: #252a33;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.35);
+}
+
+tfoot td.num,
+tfoot td.str {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
 footer {
   margin-top: 1.5rem;
   padding-top: 1rem;

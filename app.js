@@ -22,6 +22,7 @@
 
   const thead = document.getElementById("thead");
   const tbody = document.getElementById("tbody");
+  const tfoot = document.getElementById("tfoot");
   const search = document.getElementById("search");
   const countEl = document.getElementById("count");
   const metaEl = document.getElementById("header-meta");
@@ -135,6 +136,41 @@
     const d = document.createElement("div");
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  function valueForAverage(row, colDef) {
+    if (colDef.key === "timeDead" || colDef.key === "timeSurvived") {
+      return parseTimeToSeconds(row[colDef.key]);
+    }
+    if (colDef.type === "num") return Number(row[colDef.key]) || 0;
+    return parseGameNumber(row[colDef.key]);
+  }
+
+  function formatAvgNumber(mean) {
+    if (!Number.isFinite(mean)) return "0";
+    const rounded = Math.round(mean * 10) / 10;
+    if (Math.abs(rounded - Math.round(rounded)) < 1e-9) return String(Math.round(rounded));
+    return rounded.toFixed(1);
+  }
+
+  /** Averages over the given rows (same list shown in the table, after search). */
+  function computeAverageRow(rows) {
+    const n = rows.length;
+    if (!n) return null;
+    const out = { familyName: `Average (${n})` };
+    for (const c of COLS) {
+      if (c.key === "familyName") continue;
+      let sum = 0;
+      for (const r of rows) sum += valueForAverage(r, c);
+      const mean = sum / n;
+      if (c.type === "num") out[c.key] = formatAvgNumber(mean);
+      else if (c.key === "timeDead" || c.key === "timeSurvived") {
+        out[c.key] = formatTimeFromSeconds(Math.round(mean));
+      } else {
+        out[c.key] = formatGameNumber(mean);
+      }
+    }
+    return out;
   }
 
   function emptyAccumulator() {
@@ -362,6 +398,7 @@
 
     if (!filtered.length) {
       tbody.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No matching family names.</td></tr>`;
+      tfoot.innerHTML = "";
       applyHeaderSortIndicators();
       return;
     }
@@ -376,6 +413,15 @@
         return `<tr>${tds}</tr>`;
       })
       .join("");
+
+    const avgRow = computeAverageRow(filtered);
+    tfoot.innerHTML = avgRow
+      ? `<tr>${COLS.map((c) => {
+          const v = avgRow[c.key];
+          const cls = c.type === "text" ? "" : c.type;
+          return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
+        }).join("")}</tr>`
+      : "";
 
     applyHeaderSortIndicators();
   }
