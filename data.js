@@ -50,18 +50,38 @@ window.NODE_WAR_DATA = {
   { familyName: "Afary", enemyKills: 0, deaths: 3, maxKillStreak: 0, damageDealt: "1.5K", damageTaken: "47.0K", ccHits: 0, hpHealed: "16.8K", allyHp: "2.1K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "01:13", timeSurvived: "39:59" },
     ],
   },
-};
-
-/*
-  Add another war day (same shape as above):
-
   "2026-05-15": {
     outcome: "victory",
     rows: [
-      { familyName: "PlayerOne", enemyKills: 0, deaths: 0, maxKillStreak: 0,
-        damageDealt: "0", damageTaken: "0", ccHits: 0, hpHealed: "0", allyHp: "0",
-        totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0,
-        maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "00:00", timeSurvived: "00:00" },
+      { familyName: "GodZeebo", enemyKills: 6, deaths: 16, maxKillStreak: 2, damageDealt: "241.9K", damageTaken: "378.0K", ccHits: 20, hpHealed: "273.9K", allyHp: "39.9K", totalDamageToFort: "2.0M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 4, timeDead: "06:19", timeSurvived: "36:41" },
+      { familyName: "LordGrim", enemyKills: 23, deaths: 12, maxKillStreak: 3, damageDealt: "446.6K", damageTaken: "257.5K", ccHits: 160, hpHealed: "184.4K", allyHp: "27.3K", totalDamageToFort: "388.1K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "04:47", timeSurvived: "38:13" },
+      { familyName: "Koisenso", enemyKills: 19, deaths: 23, maxKillStreak: 3, damageDealt: "465.3K", damageTaken: "418.6K", ccHits: 72, hpHealed: "277.4K", allyHp: "30.9K", totalDamageToFort: "3.3M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "09:39", timeSurvived: "33:21" },
+      { familyName: "CM_YAMI", enemyKills: 2, deaths: 16, maxKillStreak: 1, damageDealt: "147.7K", damageTaken: "311.9K", ccHits: 34, hpHealed: "218.2K", allyHp: "51.3K", totalDamageToFort: "1.8M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 2, timeDead: "06:31", timeSurvived: "36:29" },
+      { familyName: "TheRossSauce", enemyKills: 7, deaths: 28, maxKillStreak: 1, damageDealt: "217.6K", damageTaken: "339.4K", ccHits: 34, hpHealed: "157.6K", allyHp: "81.6K", totalDamageToFort: "963.8K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "11:37", timeSurvived: "31:23" },
+      { familyName: "Trooperr", enemyKills: 30, deaths: 12, maxKillStreak: 4, damageDealt: "677.3K", damageTaken: "198.6K", ccHits: 126, hpHealed: "121.4K", allyHp: "51.4K", totalDamageToFort: "333.9K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "11:15", timeSurvived: "31:45" },
+      { familyName: "Interventionz", enemyKills: 2, deaths: 14, maxKillStreak: 1, damageDealt: "81.1K", damageTaken: "203.4K", ccHits: 38, hpHealed: "114.3K", allyHp: "17.2K", totalDamageToFort: "268.6K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "07:09", timeSurvived: "35:51" },
+      { familyName: "IEtherealI", enemyKills: 3, deaths: 6, maxKillStreak: 1, damageDealt: "64.7K", damageTaken: "160.4K", ccHits: 73, hpHealed: "122.1K", allyHp: "13.0K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 3, timeDead: "02:09", timeSurvived: "40:51" },
+      { familyName: "Jetsecan", enemyKills: 10, deaths: 7, maxKillStreak: 3, damageDealt: "315.8K", damageTaken: "215.7K", ccHits: 59, hpHealed: "176.1K", allyHp: "67.2K", totalDamageToFort: "706.0K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "03:31", timeSurvived: "39:29" },
+      { familyName: "FxAxFxO", enemyKills: 12, deaths: 16, maxKillStreak: 2, damageDealt: "389.0K", damageTaken: "357.8K", ccHits: 96, hpHealed: "268.4K", allyHp: "35.4K", totalDamageToFort: "6.1M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 1, timeDead: "07:00", timeSurvived: "36:00" },
+      { familyName: "Afary", enemyKills: 0, deaths: 10, maxKillStreak: 0, damageDealt: "65.6K", damageTaken: "155.5K", ccHits: 26, hpHealed: "92.8K", allyHp: "15.3K", totalDamageToFort: "433.8K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "06:11", timeSurvived: "36:49" },
+      { familyName: "MoonlitMocha", enemyKills: 3, deaths: 6, maxKillStreak: 1, damageDealt: "196.2K", damageTaken: "112.8K", ccHits: 194, hpHealed: "77.0K", allyHp: "10.9K", totalDamageToFort: "1.0K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "02:22", timeSurvived: "40:38" },
+      { familyName: "Treehugger", enemyKills: 3, deaths: 8, maxKillStreak: 1, damageDealt: "101.3K", damageTaken: "135.3K", ccHits: 23, hpHealed: "82.8K", allyHp: "35.5K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 2, timeDead: "03:03", timeSurvived: "39:57" },
+      { familyName: "Grimz", enemyKills: 9, deaths: 28, maxKillStreak: 2, damageDealt: "273.0K", damageTaken: "373.5K", ccHits: 68, hpHealed: "195.6K", allyHp: "35.7K", totalDamageToFort: "1.8M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "12:23", timeSurvived: "30:37" },
+      { familyName: "Trackstarriq", enemyKills: 8, deaths: 17, maxKillStreak: 2, damageDealt: "191.5K", damageTaken: "361.3K", ccHits: 38, hpHealed: "261.1K", allyHp: "45.6K", totalDamageToFort: "2.9M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 5, timeDead: "08:17", timeSurvived: "34:43" },
+      { familyName: "XxCASHxX", enemyKills: 0, deaths: 24, maxKillStreak: 0, damageDealt: "372", damageTaken: "261.6K", ccHits: 2, hpHealed: "102.2K", allyHp: "119.6K", totalDamageToFort: "238.0K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "16:16", timeSurvived: "26:44" },
+      { familyName: "Darkiden", enemyKills: 7, deaths: 25, maxKillStreak: 1, damageDealt: "163.0K", damageTaken: "329.3K", ccHits: 30, hpHealed: "171.7K", allyHp: "28.5K", totalDamageToFort: "1.0M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 1, timeDead: "10:50", timeSurvived: "32:10" },
+      { familyName: "Eight76", enemyKills: 19, deaths: 26, maxKillStreak: 3, damageDealt: "233.9K", damageTaken: "353.2K", ccHits: 32, hpHealed: "201.4K", allyHp: "50.4K", totalDamageToFort: "1.4M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 1, timeDead: "10:31", timeSurvived: "32:29" },
+      { familyName: "XChronik", enemyKills: 2, deaths: 5, maxKillStreak: 1, damageDealt: "60.8K", damageTaken: "100.7K", ccHits: 27, hpHealed: "68.6K", allyHp: "8.3K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 2, timeDead: "01:48", timeSurvived: "41:12" },
+      { familyName: "Renegade69", enemyKills: 7, deaths: 23, maxKillStreak: 1, damageDealt: "228.1K", damageTaken: "326.4K", ccHits: 72, hpHealed: "182.3K", allyHp: "31.4K", totalDamageToFort: "2.3M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 6, timeDead: "11:12", timeSurvived: "31:48" },
+      { familyName: "Valenciaga", enemyKills: 2, deaths: 18, maxKillStreak: 1, damageDealt: "132.2K", damageTaken: "250.8K", ccHits: 21, hpHealed: "133.2K", allyHp: "22.6K", totalDamageToFort: "1.3M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "15:54", timeSurvived: "27:06" },
+      { familyName: "Odaa", enemyKills: 18, deaths: 22, maxKillStreak: 4, damageDealt: "356.1K", damageTaken: "454.1K", ccHits: 36, hpHealed: "314.7K", allyHp: "41.8K", totalDamageToFort: "3.5M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "09:19", timeSurvived: "33:41" },
+      { familyName: "Jdark25", enemyKills: 17, deaths: 17, maxKillStreak: 3, damageDealt: "347.7K", damageTaken: "392.8K", ccHits: 89, hpHealed: "282.2K", allyHp: "36.9K", totalDamageToFort: "345.1K", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "06:54", timeSurvived: "36:06" },
+      { familyName: "PickleRick69", enemyKills: 17, deaths: 18, maxKillStreak: 1, damageDealt: "399.4K", damageTaken: "320.4K", ccHits: 69, hpHealed: "207.7K", allyHp: "31.8K", totalDamageToFort: "4.6M", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 5, timeDead: "08:24", timeSurvived: "34:36" },
+      { familyName: "Jazz1118", enemyKills: 0, deaths: 3, maxKillStreak: 0, damageDealt: "42.9K", damageTaken: "73.6K", ccHits: 36, hpHealed: "54.7K", allyHp: "6.8K", totalDamageToFort: "0", cannonHits: 0, objectsDestroyedCannon: 0, maxCannonHitDistance: 0, trapsTriggered: 0, timeDead: "00:33", timeSurvived: "42:27" },
     ],
   },
+};
+
+/*
+  Add another war day: copy the "2026-05-15" block, change the date key and paste rows from the video.
 */
