@@ -473,6 +473,12 @@ footer a {
   font-family: var(--mono);
 }
 
+.mvp-breakdown dd.mvp-weight {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f0d78c;
+}
+
 .mvp-leaderboard {
   list-style: none;
   margin: 0;

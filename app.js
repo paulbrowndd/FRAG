@@ -333,10 +333,9 @@
     return `${(score * 100).toFixed(1)}%`;
   }
 
-  function formatMvpComponentPts(partValue, weight) {
-    const pts = partValue * 100;
-    const maxPts = weight * 100;
-    return `${pts.toFixed(1)} / ${maxPts.toFixed(0)}`;
+  function formatMvpWeight(weight) {
+    const pct = weight * 100;
+    return Number.isInteger(pct) ? `${pct}%` : `${pct.toFixed(1)}%`;
   }
 
   function renderMvpSection(rows) {
@@ -355,13 +354,12 @@
       <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
     `;
 
-    mvpBreakdown.innerHTML = MVP_COMPONENTS.map((c) => {
-      const partVal = winner.parts[c.key];
-      return `<div>
+    mvpBreakdown.innerHTML = MVP_COMPONENTS.map(
+      (c) => `<div>
         <dt>${escapeHtml(c.label)}</dt>
-        <dd>${escapeHtml(formatMvpComponentPts(partVal, c.weight))}</dd>
-      </div>`;
-    }).join("");
+        <dd class="mvp-weight">${escapeHtml(formatMvpWeight(c.weight))}</dd>
+      </div>`
+    ).join("");
 
     mvpLeaderboard.innerHTML = topN
       .map((entry, i) => {
