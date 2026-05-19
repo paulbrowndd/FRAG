@@ -18,7 +18,7 @@
     { key: "timeSurvived", label: "Time survived", type: "str" },
   ];
 
-  const VIEW = { DAILY: "daily", WEEKLY: "weekly", LIFETIME: "lifetime" };
+  const VIEW = { DAILY: "daily", WEEKLY: "weekly", MONTHLY: "monthly", LIFETIME: "lifetime" };
 
   const thead = document.getElementById("thead");
   const tbody = document.getElementById("tbody");
@@ -29,13 +29,16 @@
   const viewTabs = document.querySelectorAll("[data-view]");
   const dateSelect = document.getElementById("date-select");
   const weekSelect = document.getElementById("week-select");
+  const monthSelect = document.getElementById("month-select");
   const scopeRow = document.getElementById("scope-row");
   const dateField = document.getElementById("date-field");
   const weekField = document.getElementById("week-field");
+  const monthField = document.getElementById("month-field");
 
   let currentView = VIEW.DAILY;
   let currentDate = "";
   let currentWeekSunday = "";
+  let currentMonth = "";
   let sortKey = null;
   let sortDir = "asc";
 
@@ -81,6 +84,23 @@
   function formatWeekRangeLabel(sundayIso) {
     const saturday = addDaysUTC(sundayIso, 6);
     return `${formatShortDate(sundayIso)} – ${formatShortDate(saturday)}`;
+  }
+
+  /** Calendar month key `YYYY-MM` (UTC) for an ISO date. */
+  function monthKeyUTC(iso) {
+    const dt = parseISOUTC(iso);
+    const y = dt.getUTCFullYear();
+    const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+    return `${y}-${m}`;
+  }
+
+  function formatMonthLabel(monthKey) {
+    const [y, m] = monthKey.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
   }
 
   function parseGameNumber(s) {
@@ -268,6 +288,23 @@
       .sort((a, b) => b.sunday.localeCompare(a.sunday));
   }
 
+  function datesInMonth(data, monthKey) {
+    return sortedDateKeys(data).filter((d) => monthKeyUTC(d) === monthKey);
+  }
+
+  function uniqueMonths(data) {
+    const keys = sortedDateKeys(data);
+    const set = new Map();
+    for (const d of keys) {
+      const mk = monthKeyUTC(d);
+      if (!set.has(mk)) set.set(mk, []);
+      set.get(mk).push(d);
+    }
+    return Array.from(set.entries())
+      .map(([month, dates]) => ({ month, dates }))
+      .sort((a, b) => b.month.localeCompare(a.month));
+  }
+
   function resetSort() {
     sortKey = null;
     sortDir = "asc";
@@ -373,6 +410,20 @@
       return { rows, meta };
     }
 
+    if (currentView === VIEW.MONTHLY) {
+      const months = uniqueMonths(data);
+      const mk =
+        currentMonth && months.some((m) => m.month === currentMonth)
+          ? currentMonth
+          : months[0].month;
+      const inMonth = datesInMonth(data, mk);
+      const rows = aggregateByFamily(data, inMonth);
+      const meta = `${formatMonthLabel(mk)} · ${inMonth.length} war${
+        inMonth.length === 1 ? "" : "s"
+      } logged`;
+      return { rows, meta };
+    }
+
     const rows = aggregateByFamily(data, keys);
     return {
       rows,
@@ -456,12 +507,30 @@
     }
   }
 
+  function populateMonthSelect() {
+    const data = getWarData();
+    const months = uniqueMonths(data);
+    monthSelect.innerHTML = months
+      .map(({ month, dates }) => {
+        const label = `${formatMonthLabel(month)} (${dates.length} day${dates.length === 1 ? "" : "s"})`;
+        return `<option value="${escapeHtml(month)}">${escapeHtml(label)}</option>`;
+      })
+      .join("");
+    if (months.length) {
+      const monthKeys = months.map((m) => m.month);
+      currentMonth = monthKeys.includes(currentMonth) ? currentMonth : monthKeys[0];
+      monthSelect.value = currentMonth;
+    }
+  }
+
   function updateScopeVisibility() {
     const daily = currentView === VIEW.DAILY;
     const weekly = currentView === VIEW.WEEKLY;
+    const monthly = currentView === VIEW.MONTHLY;
     dateField.hidden = !daily;
     weekField.hidden = !weekly;
-    scopeRow.hidden = !daily && !weekly;
+    monthField.hidden = !monthly;
+    scopeRow.hidden = !daily && !weekly && !monthly;
   }
 
   function setView(view) {
@@ -480,6 +549,7 @@
     renderHead();
     populateDateSelect();
     populateWeekSelect();
+    populateMonthSelect();
     updateScopeVisibility();
 
     const data = getWarData();
@@ -492,6 +562,12 @@
         currentWeekSunday = sundayOfWeekUTC(currentDate);
         if (!w.some((x) => x.sunday === currentWeekSunday)) currentWeekSunday = w[0].sunday;
         weekSelect.value = currentWeekSunday;
+      }
+      const mo = uniqueMonths(data);
+      if (mo.length) {
+        currentMonth = monthKeyUTC(currentDate);
+        if (!mo.some((x) => x.month === currentMonth)) currentMonth = mo[0].month;
+        monthSelect.value = currentMonth;
       }
     }
 
@@ -506,6 +582,11 @@
 
     weekSelect.addEventListener("change", function () {
       currentWeekSunday = this.value;
+      renderBody();
+    });
+
+    monthSelect.addEventListener("change", function () {
+      currentMonth = this.value;
       renderBody();
     });
 

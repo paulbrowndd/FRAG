@@ -22,6 +22,9 @@
           <button type="button" class="tab" data-view="weekly" role="tab" aria-selected="false">
             Weekly
           </button>
+          <button type="button" class="tab" data-view="monthly" role="tab" aria-selected="false">
+            Monthly
+          </button>
           <button type="button" class="tab" data-view="lifetime" role="tab" aria-selected="false">
             Lifetime
           </button>
@@ -35,6 +38,10 @@
           <div id="week-field" class="field" hidden>
             <label for="week-select">Week</label>
             <select id="week-select"></select>
+          </div>
+          <div id="month-field" class="field" hidden>
+            <label for="month-select">Month</label>
+            <select id="month-select"></select>
           </div>
         </div>
       </div>
@@ -66,7 +73,8 @@
         Add each new video under a new <code>YYYY-MM-DD</code> key in <code>data.js</code>
         (<code>NODE_WAR_DATA</code>). Optional <code>outcome</code> is kept for your records
         only (not shown on this page). Weekly rolls up all days whose week (Sun–Sat, UTC)
-        matches the week you pick. Lifetime sums across every logged day (max kill streak and
+        matches the week you pick. Monthly rolls up every war logged in that calendar month
+        (UTC). Lifetime sums across every logged day (max kill streak and
         max cannon distance use the best single war; time dead and time survived add up across
         wars).
         Click any column header to sort (stats default to highest first; click again to
