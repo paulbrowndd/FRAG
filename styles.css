@@ -376,6 +376,155 @@ footer a {
   color: var(--muted);
 }
 
+.mvp-section {
+  margin-bottom: 1.25rem;
+  padding: 1.25rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(145deg, var(--surface) 0%, #161920 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.mvp-section[hidden] {
+  display: none !important;
+}
+
+.mvp-head {
+  margin-bottom: 1rem;
+}
+
+.mvp-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #f0d78c;
+}
+
+.mvp-sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 52ch;
+}
+
+.mvp-winner {
+  text-align: center;
+  padding: 1rem 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.mvp-winner-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+
+.mvp-winner-name {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.35rem, 4vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.mvp-winner-score {
+  margin: 0.35rem 0 0;
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  color: #f0d78c;
+}
+
+.mvp-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.5rem 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.mvp-breakdown > div {
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+}
+
+.mvp-breakdown dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.mvp-breakdown dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+}
+
+.mvp-leaderboard {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.mvp-rank-item {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+}
+
+.mvp-rank-item--first {
+  border-color: rgba(201, 162, 39, 0.4);
+  background: var(--accent-dim);
+}
+
+.mvp-rank-num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--muted);
+  text-align: right;
+}
+
+.mvp-rank-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mvp-rank-score {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.mvp-rank-item--first .mvp-rank-score {
+  color: #f0d78c;
+}
+
 @media (max-width: 640px) {
   .toolbar {
     flex-direction: column;

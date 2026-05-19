@@ -34,6 +34,21 @@
   const dateField = document.getElementById("date-field");
   const weekField = document.getElementById("week-field");
   const monthField = document.getElementById("month-field");
+  const mvpSection = document.getElementById("mvp-section");
+  const mvpWinner = document.getElementById("mvp-winner");
+  const mvpBreakdown = document.getElementById("mvp-breakdown");
+  const mvpLeaderboard = document.getElementById("mvp-leaderboard");
+
+  const MVP_COMPONENTS = [
+    { key: "enemyKills", label: "Enemy kills", weight: 0.2 },
+    { key: "damageDealt", label: "Damage dealt", weight: 0.15 },
+    { key: "ccHits", label: "CC hits", weight: 0.15 },
+    { key: "totalDamageToFort", label: "Fort damage", weight: 0.2 },
+    { key: "healing", label: "HP healed + ally HP", weight: 0.1 },
+    { key: "timeSurvived", label: "Time survived", weight: 0.1 },
+    { key: "damageTaken", label: "Damage taken", weight: 0.05 },
+    { key: "deaths", label: "Low deaths", weight: 0.05 },
+  ];
 
   let currentView = VIEW.DAILY;
   let currentDate = "";
@@ -255,6 +270,111 @@
     };
   }
 
+  function safeRatio(value, highest) {
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    if (!Number.isFinite(highest) || highest <= 0) return 0;
+    return value / highest;
+  }
+
+  function mvpMetricsFromRow(row) {
+    return {
+      enemyKills: Number(row.enemyKills) || 0,
+      damageDealt: parseGameNumber(row.damageDealt),
+      ccHits: Number(row.ccHits) || 0,
+      totalDamageToFort: parseGameNumber(row.totalDamageToFort),
+      healing: parseGameNumber(row.hpHealed) + parseGameNumber(row.allyHp),
+      timeSurvived: parseTimeToSeconds(row.timeSurvived),
+      damageTaken: parseGameNumber(row.damageTaken),
+      deaths: Number(row.deaths) || 0,
+    };
+  }
+
+  /** Monthly MVP: weighted score vs guild-high for each category. */
+  function computeMvpScores(rows) {
+    if (!rows.length) return [];
+    const withMetrics = rows.map((row) => ({
+      familyName: row.familyName,
+      m: mvpMetricsFromRow(row),
+    }));
+    const max = {
+      enemyKills: Math.max(...withMetrics.map((x) => x.m.enemyKills)),
+      damageDealt: Math.max(...withMetrics.map((x) => x.m.damageDealt)),
+      ccHits: Math.max(...withMetrics.map((x) => x.m.ccHits)),
+      totalDamageToFort: Math.max(...withMetrics.map((x) => x.m.totalDamageToFort)),
+      healing: Math.max(...withMetrics.map((x) => x.m.healing)),
+      timeSurvived: Math.max(...withMetrics.map((x) => x.m.timeSurvived)),
+      damageTaken: Math.max(...withMetrics.map((x) => x.m.damageTaken)),
+      deaths: Math.max(...withMetrics.map((x) => x.m.deaths)),
+    };
+
+    return withMetrics
+      .map(({ familyName, m }) => {
+        const parts = {
+          enemyKills: 0.2 * safeRatio(m.enemyKills, max.enemyKills),
+          damageDealt: 0.15 * safeRatio(m.damageDealt, max.damageDealt),
+          ccHits: 0.15 * safeRatio(m.ccHits, max.ccHits),
+          totalDamageToFort: 0.2 * safeRatio(m.totalDamageToFort, max.totalDamageToFort),
+          healing: 0.1 * safeRatio(m.healing, max.healing),
+          timeSurvived: 0.1 * safeRatio(m.timeSurvived, max.timeSurvived),
+          damageTaken: 0.05 * safeRatio(m.damageTaken, max.damageTaken),
+          deaths: 0.05 * (max.deaths > 0 ? 1 - m.deaths / max.deaths : 1),
+        };
+        const score = Object.values(parts).reduce((sum, v) => sum + v, 0);
+        return { familyName, score, parts };
+      })
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          a.familyName.localeCompare(b.familyName, undefined, { sensitivity: "base" })
+      );
+  }
+
+  function formatMvpScore(score) {
+    return `${(score * 100).toFixed(1)}%`;
+  }
+
+  function formatMvpComponentPts(partValue, weight) {
+    const pts = partValue * 100;
+    const maxPts = weight * 100;
+    return `${pts.toFixed(1)} / ${maxPts.toFixed(0)}`;
+  }
+
+  function renderMvpSection(rows) {
+    if (!mvpSection) return;
+    const show = currentView === VIEW.MONTHLY && rows.length > 0;
+    mvpSection.hidden = !show;
+    if (!show) return;
+
+    const ranked = computeMvpScores(rows);
+    const winner = ranked[0];
+    const topN = ranked.slice(0, 10);
+
+    mvpWinner.innerHTML = `
+      <p class="mvp-winner-label">MVP</p>
+      <p class="mvp-winner-name">${escapeHtml(winner.familyName)}</p>
+      <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
+    `;
+
+    mvpBreakdown.innerHTML = MVP_COMPONENTS.map((c) => {
+      const partVal = winner.parts[c.key];
+      return `<div>
+        <dt>${escapeHtml(c.label)}</dt>
+        <dd>${escapeHtml(formatMvpComponentPts(partVal, c.weight))}</dd>
+      </div>`;
+    }).join("");
+
+    mvpLeaderboard.innerHTML = topN
+      .map((entry, i) => {
+        const first = i === 0 ? " mvp-rank-item--first" : "";
+        return `<li class="mvp-rank-item${first}">
+          <span class="mvp-rank-num">${i + 1}</span>
+          <span class="mvp-rank-name">${escapeHtml(entry.familyName)}</span>
+          <span class="mvp-rank-score">${escapeHtml(formatMvpScore(entry.score))}</span>
+        </li>`;
+      })
+      .join("");
+  }
+
   function aggregateByFamily(data, dateKeys) {
     const map = new Map();
     for (const dk of dateKeys) {
@@ -434,6 +554,7 @@
   function renderBody() {
     const { rows, meta } = getRowsForView();
     metaEl.textContent = meta;
+    renderMvpSection(rows);
 
     const q = (search.value || "").trim().toLowerCase();
     const total = rows.length;

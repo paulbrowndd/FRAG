@@ -59,6 +59,16 @@
         <span id="count" class="count"></span>
       </div>
 
+      <section id="mvp-section" class="mvp-section" hidden aria-labelledby="mvp-heading">
+        <div class="mvp-head">
+          <h2 id="mvp-heading" class="mvp-title">Monthly MVP</h2>
+          <p class="mvp-sub">Overall score from weighted monthly totals (highest in guild = 100% per category).</p>
+        </div>
+        <div class="mvp-winner" id="mvp-winner"></div>
+        <dl id="mvp-breakdown" class="mvp-breakdown"></dl>
+        <ol id="mvp-leaderboard" class="mvp-leaderboard" aria-label="MVP score rankings"></ol>
+      </section>
+
       <div class="table-scroll" role="region" aria-label="Node war statistics table">
         <table>
           <thead>
@@ -74,7 +84,8 @@
         (<code>NODE_WAR_DATA</code>). Optional <code>outcome</code> is kept for your records
         only (not shown on this page). Weekly rolls up all days whose week (Sun–Sat, UTC)
         matches the week you pick. Monthly rolls up every war logged in that calendar month
-        (UTC). Lifetime sums across every logged day (max kill streak and
+        (UTC). Monthly MVP ranks players by a weighted overall score (see MVP
+        section). Lifetime sums across every logged day (max kill streak and
         max cannon distance use the best single war; time dead and time survived add up across
         wars).
         Click any column header to sort (stats default to highest first; click again to
