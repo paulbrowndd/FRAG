@@ -1,6 +1,6 @@
 /**
- * Canonical guild roster and war-screen name aliases.
- * Edit GUILD_ROSTER when members join or leave; add aliases when in-game names differ.
+ * Canonical FRAG guild roster. War data in data.js should only include these members
+ * (plus GUILD_NAME_ALIASES for alternate in-game spellings).
  */
 window.GUILD_ROSTER = [
   "Afary",
@@ -15,7 +15,7 @@ window.GUILD_ROSTER = [
   "Clan_Ellis",
   "CM_Yami",
   "Coldest",
-  "Coldsins",
+  "Coldsin",
   "Conlaoch",
   "Darkiden",
   "DDE",

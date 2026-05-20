@@ -98,14 +98,6 @@ body {
   gap: 1.1rem;
 }
 
-.brand-logo {
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 18px rgba(255, 60, 35, 0.45));
-  flex-shrink: 0;
-}
-
 .brand-text {
   min-width: 0;
 }
@@ -713,14 +705,7 @@ tfoot td.str {
   }
 
   .brand {
-    flex-direction: column;
     text-align: center;
-    gap: 0.75rem;
-  }
-
-  .brand-logo {
-    width: 64px;
-    height: 64px;
   }
 
   .panel--toolbar {
