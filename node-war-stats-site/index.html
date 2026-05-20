@@ -3,24 +3,40 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Node war stats</title>
+    <title>FRAG · Node War Stats</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="bg-pattern" aria-hidden="true"></div>
+
     <div class="wrap">
-      <header>
-        <p class="meta" id="header-meta">Node war result</p>
-        <h1>Guild roster &amp; stats</h1>
+      <header class="site-header">
+        <div class="brand">
+          <img
+            class="brand-logo"
+            src="assets/frag-logo.png"
+            alt="FRAG"
+            width="72"
+            height="72"
+          />
+          <div class="brand-text">
+            <p class="brand-tag">FRAG</p>
+            <h1>Node War Stats</h1>
+            <p class="meta" id="header-meta">Node war result</p>
+          </div>
+        </div>
       </header>
 
-      <div class="controls">
+      <section class="panel panel--controls" aria-label="View and period">
         <div class="tabs" role="tablist" aria-label="View mode">
           <button type="button" class="tab tab--active" data-view="daily" role="tab" aria-selected="true">
             Daily
           </button>
           <button type="button" class="tab" data-view="weekly" role="tab" aria-selected="false">
             Weekly
+          </button>
+          <button type="button" class="tab" data-view="monthly" role="tab" aria-selected="false">
+            Monthly
           </button>
           <button type="button" class="tab" data-view="lifetime" role="tab" aria-selected="false">
             Lifetime
@@ -36,54 +52,56 @@
             <label for="week-select">Week</label>
             <select id="week-select"></select>
           </div>
+          <div id="month-field" class="field" hidden>
+            <label for="month-select">Month</label>
+            <select id="month-select"></select>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="toolbar">
+      <section class="panel panel--toolbar" aria-label="Filters">
         <label class="search" for="search">
           <span class="visually-hidden">Filter by family name</span>
           <input
             type="search"
             id="search"
-            placeholder="Filter by family name…"
+            placeholder="Search family name…"
             autocomplete="off"
           />
         </label>
+        <label class="guild-only-toggle">
+          <input type="checkbox" id="guild-only" />
+          <span>Guild only</span>
+        </label>
         <span id="count" class="count"></span>
-      </div>
+      </section>
 
-      <div class="table-scroll" role="region" aria-label="Node war statistics table">
+      <div id="attendance-panel" class="attendance-panel panel" hidden></div>
+
+      <section id="mvp-section" class="mvp-section panel" hidden aria-labelledby="mvp-heading">
+        <div class="mvp-head">
+          <h2 id="mvp-heading" class="mvp-title">Monthly MVP</h2>
+          <p class="mvp-sub">
+            Weighted score from monthly totals. Best in guild per category earns full credit.
+          </p>
+        </div>
+        <div class="mvp-winner" id="mvp-winner"></div>
+        <dl id="mvp-breakdown" class="mvp-breakdown"></dl>
+        <ol id="mvp-leaderboard" class="mvp-leaderboard" aria-label="MVP score rankings"></ol>
+      </section>
+
+      <div class="table-scroll panel panel--table" role="region" aria-label="Node war statistics table">
         <table>
           <thead>
             <tr id="thead"></tr>
           </thead>
           <tbody id="tbody"></tbody>
+          <tfoot id="tfoot"></tfoot>
         </table>
       </div>
-
-      <footer>
-        Add each new video under a new <code>YYYY-MM-DD</code> key in <code>data.js</code>
-        (<code>NODE_WAR_DATA</code>). Optional <code>outcome</code> is kept for your records
-        only (not shown on this page). Weekly rolls up all days whose week (Sun–Sat, UTC)
-        matches the week you pick. Lifetime sums across every logged day (max kill streak and
-        max cannon distance use the best single war; time dead and time survived add up across
-        wars). Click any column header to sort; click again to reverse.
-      </footer>
     </div>
 
-    <style>
-      .visually-hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-      }
-    </style>
+    <script src="guild.js"></script>
     <script src="data.js"></script>
     <script src="app.js"></script>
   </body>
