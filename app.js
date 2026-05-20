@@ -38,6 +38,8 @@
   const mvpWinner = document.getElementById("mvp-winner");
   const mvpBreakdown = document.getElementById("mvp-breakdown");
   const mvpLeaderboard = document.getElementById("mvp-leaderboard");
+  const guildOnlyInput = document.getElementById("guild-only");
+  const attendancePanel = document.getElementById("attendance-panel");
 
   const MVP_COMPONENTS = [
     { key: "enemyKills", label: "Enemy kills", weight: 0.2 },
@@ -56,6 +58,156 @@
   let currentMonth = "";
   let sortKey = null;
   let sortDir = "asc";
+
+  let rosterIndex = null;
+
+  function getGuildRoster() {
+    return Array.isArray(window.GUILD_ROSTER) ? window.GUILD_ROSTER : [];
+  }
+
+  function getGuildAliases() {
+    return window.GUILD_NAME_ALIASES && typeof window.GUILD_NAME_ALIASES === "object"
+      ? window.GUILD_NAME_ALIASES
+      : {};
+  }
+
+  function buildRosterIndex() {
+    const map = new Map();
+    for (const name of getGuildRoster()) {
+      map.set(name.toLowerCase(), name);
+    }
+    return map;
+  }
+
+  function rosterIndexMap() {
+    if (!rosterIndex) rosterIndex = buildRosterIndex();
+    return rosterIndex;
+  }
+
+  /** Canonical roster name if this war row is a guild member; otherwise null. */
+  function resolveGuildName(warName) {
+    const raw = String(warName || "").trim();
+    if (!raw) return null;
+    const idx = rosterIndexMap();
+    const aliases = getGuildAliases();
+    const alias = aliases[raw] || aliases[raw.toLowerCase()];
+    const candidates = alias ? [alias, raw] : [raw];
+    for (const c of candidates) {
+      const hit = idx.get(c.toLowerCase());
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  function isGuildMember(warName) {
+    return resolveGuildName(warName) !== null;
+  }
+
+  function guildOnlyEnabled() {
+    return Boolean(guildOnlyInput && guildOnlyInput.checked);
+  }
+
+  function filterGuildRows(rows) {
+    if (!guildOnlyEnabled()) return rows;
+    return rows.filter((r) => isGuildMember(r.familyName));
+  }
+
+  function getPeriodDateKeys(data) {
+    const keys = sortedDateKeys(data);
+    if (!keys.length) return [];
+
+    if (currentView === VIEW.DAILY) {
+      const dk = currentDate && data[currentDate] ? currentDate : keys[keys.length - 1];
+      return [dk];
+    }
+    if (currentView === VIEW.WEEKLY) {
+      const weeks = uniqueWeekStarts(data);
+      const sun =
+        currentWeekSunday && weeks.some((w) => w.sunday === currentWeekSunday)
+          ? currentWeekSunday
+          : weeks[0]?.sunday;
+      return sun ? datesInWeek(data, sun) : [];
+    }
+    if (currentView === VIEW.MONTHLY) {
+      const months = uniqueMonths(data);
+      const mk =
+        currentMonth && months.some((m) => m.month === currentMonth)
+          ? currentMonth
+          : months[0]?.month;
+      return mk ? datesInMonth(data, mk) : [];
+    }
+    return keys;
+  }
+
+  function presentGuildCanonicalSet(data, dateKeys) {
+    const present = new Set();
+    for (const dk of dateKeys) {
+      const day = data[dk];
+      if (!day || !Array.isArray(day.rows)) continue;
+      for (const r of day.rows) {
+        const canon = resolveGuildName(r.familyName);
+        if (canon) present.add(canon);
+      }
+    }
+    return present;
+  }
+
+  function missingGuildMembers(data, dateKeys) {
+    const present = presentGuildCanonicalSet(data, dateKeys);
+    return getGuildRoster()
+      .filter((name) => !present.has(name))
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }
+
+  function guestNamesInRows(rows) {
+    return rows
+      .map((r) => r.familyName)
+      .filter((name) => !isGuildMember(name));
+  }
+
+  function renderAttendancePanel(data, dateKeys, rows) {
+    if (!attendancePanel || !getGuildRoster().length) {
+      if (attendancePanel) attendancePanel.hidden = true;
+      return;
+    }
+
+    const rosterSize = getGuildRoster().length;
+    const present = presentGuildCanonicalSet(data, dateKeys);
+    const missing = missingGuildMembers(data, dateKeys);
+    const guests = guestNamesInRows(rows);
+    const wars = dateKeys.length;
+
+    let periodLabel = "this period";
+    if (currentView === VIEW.DAILY && dateKeys[0]) {
+      periodLabel = formatShortDate(dateKeys[0]);
+    } else if (currentView === VIEW.WEEKLY && dateKeys[0]) {
+      periodLabel = `week of ${formatWeekRangeLabel(sundayOfWeekUTC(dateKeys[0]))}`;
+    } else if (currentView === VIEW.MONTHLY && dateKeys[0]) {
+      periodLabel = formatMonthLabel(monthKeyUTC(dateKeys[0]));
+    } else if (currentView === VIEW.LIFETIME) {
+      periodLabel = "all logged wars";
+    }
+
+    const warNote =
+      wars === 1 ? "1 war" : wars > 1 ? `${wars} wars` : "no wars logged";
+
+    attendancePanel.hidden = false;
+    attendancePanel.innerHTML = `
+      <p class="attendance-summary">
+        <strong>${present.size}</strong> of <strong>${rosterSize}</strong> guild members in ${escapeHtml(periodLabel)}
+        (${escapeHtml(warNote)}).
+        ${guests.length ? `<span class="attendance-guests">${guests.length} guest${guests.length === 1 ? "" : "s"} in results.</span>` : ""}
+      </p>
+      ${
+        missing.length
+          ? `<details class="attendance-missing">
+              <summary>Absent (${missing.length})</summary>
+              <p class="attendance-missing-list">${missing.map((n) => escapeHtml(n)).join(", ")}</p>
+            </details>`
+          : `<p class="attendance-all">Full guild attendance for ${escapeHtml(periodLabel)}.</p>`
+      }
+    `;
+  }
 
   function getWarData() {
     return window.NODE_WAR_DATA && typeof window.NODE_WAR_DATA === "object"
@@ -340,11 +492,12 @@
 
   function renderMvpSection(rows) {
     if (!mvpSection) return;
-    const show = currentView === VIEW.MONTHLY && rows.length > 0;
+    const guildRows = filterGuildRows(rows);
+    const show = currentView === VIEW.MONTHLY && guildRows.length > 0;
     mvpSection.hidden = !show;
     if (!show) return;
 
-    const ranked = computeMvpScores(rows);
+    const ranked = computeMvpScores(guildRows);
     const winner = ranked[0];
     const topN = ranked.slice(0, 10);
 
@@ -550,24 +703,44 @@
   }
 
   function renderBody() {
+    const data = getWarData();
+    const periodKeys = getPeriodDateKeys(data);
     const { rows, meta } = getRowsForView();
     metaEl.textContent = meta;
-    renderMvpSection(rows);
+    renderAttendancePanel(data, periodKeys, rows);
+
+    const guildFiltered = filterGuildRows(rows);
+    renderMvpSection(guildFiltered);
 
     const q = (search.value || "").trim().toLowerCase();
-    const total = rows.length;
+    const total = guildFiltered.length;
     let filtered = q
-      ? rows.filter((r) => String(r.familyName).toLowerCase().includes(q))
-      : rows.slice();
+      ? guildFiltered.filter((r) => String(r.familyName).toLowerCase().includes(q))
+      : guildFiltered.slice();
     filtered = sortRowsInPlace(filtered);
 
-    countEl.textContent =
+    const guildInView = rows.filter((r) => isGuildMember(r.familyName)).length;
+    const guests = rows.length - guildInView;
+    let countText =
       filtered.length === total
         ? `${total} players`
         : `${filtered.length} of ${total} players`;
+    if (getGuildRoster().length) {
+      if (guildOnlyEnabled()) {
+        countText = `${guildInView} guild`;
+        if (guests) countText += ` · ${guests} guest${guests === 1 ? "" : "s"} hidden`;
+      } else if (guests) {
+        countText += ` · ${guildInView} guild, ${guests} guest${guests === 1 ? "" : "s"}`;
+      }
+    }
+
+    countEl.textContent = countText;
 
     if (!filtered.length) {
-      tbody.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">No matching family names.</td></tr>`;
+      const emptyMsg = guildOnlyEnabled()
+        ? "No guild members match this filter."
+        : "No matching family names.";
+      tbody.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">${escapeHtml(emptyMsg)}</td></tr>`;
       tfoot.innerHTML = "";
       applyHeaderSortIndicators();
       return;
@@ -575,12 +748,19 @@
 
     tbody.innerHTML = filtered
       .map((r) => {
+        const guest = !isGuildMember(r.familyName);
         const tds = COLS.map((c) => {
           const v = r[c.key];
-          const cls = c.type === "text" ? "" : c.type;
-          return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
+          let cls = c.type === "text" ? "" : c.type;
+          if (c.key === "familyName" && guest) cls = cls ? `${cls} name--guest` : "name--guest";
+          const label =
+            c.key === "familyName" && guest
+              ? `${escapeHtml(String(v))} <span class="guest-tag">guest</span>`
+              : escapeHtml(String(v));
+          return `<td class="${cls}">${label}</td>`;
         }).join("");
-        return `<tr>${tds}</tr>`;
+        const rowCls = guest ? ' class="row--guest"' : "";
+        return `<tr${rowCls}>${tds}</tr>`;
       })
       .join("");
 
@@ -710,6 +890,10 @@
     });
 
     search.addEventListener("input", renderBody);
+
+    if (guildOnlyInput) {
+      guildOnlyInput.addEventListener("change", renderBody);
+    }
 
     const tableEl = thead.closest("table");
     tableEl.addEventListener("click", (e) => {
