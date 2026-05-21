@@ -105,4 +105,6 @@ window.GUILD_NAME_ALIASES = {
   CM_YAMI: "CM_Yami",
   IHydrexI: "IHydrex",
   IHydrexl: "IHydrex",
+  IEthereall: "IEtherealI",
+  KOOONandFRIENDS: "KOONandFriends",
 };
