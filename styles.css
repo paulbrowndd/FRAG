@@ -22,39 +22,24 @@
   --radius-sm: 6px;
   --shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
   --shadow-glow: 0 0 32px rgba(255, 50, 30, 0.12);
-  --led-size: 7px;
-  --led-pulse: 2.4s;
+  --led-bar-pulse: 2.4s;
 }
 
-@keyframes led-pulse {
+@keyframes led-bar-pulse {
   0%,
   100% {
-    opacity: 0.28;
-    transform: scale(0.82);
+    opacity: 0.5;
     box-shadow:
-      0 0 2px rgba(255, 60, 40, 0.35),
-      0 0 6px rgba(255, 50, 30, 0.15);
-  }
-  45% {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow:
-      0 0 4px #fff,
-      0 0 10px var(--accent-bright),
-      0 0 18px var(--accent),
-      0 0 28px var(--accent-glow);
-  }
-}
-
-@keyframes led-strip-glow {
-  0%,
-  100% {
-    opacity: 0.45;
-    filter: brightness(0.85);
+      0 0 6px rgba(255, 50, 30, 0.25),
+      0 0 14px rgba(255, 50, 30, 0.12);
   }
   50% {
     opacity: 1;
-    filter: brightness(1.25);
+    box-shadow:
+      0 0 4px #fff,
+      0 0 12px var(--accent-bright),
+      0 0 22px var(--accent),
+      0 0 36px var(--accent-glow);
   }
 }
 
@@ -68,20 +53,6 @@
   }
 }
 
-@keyframes tag-led-blink {
-  0%,
-  100% {
-    opacity: 0.4;
-    box-shadow: 0 0 8px var(--accent-glow);
-  }
-  50% {
-    opacity: 1;
-    box-shadow:
-      0 0 6px #fff,
-      0 0 14px var(--accent-bright),
-      0 0 22px var(--accent);
-  }
-}
 
 *,
 *::before,
@@ -151,38 +122,28 @@ body {
   animation: ambient-pulse 5s ease-in-out infinite;
 }
 
-/* LED bulbs */
-.led-rail {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-.led {
+/* LED bars */
+.led-bar {
   display: block;
-  width: var(--led-size);
-  height: var(--led-size);
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 0%, var(--accent-bright) 35%, var(--accent) 100%);
-  animation: led-pulse var(--led-pulse) ease-in-out infinite;
-  will-change: opacity, transform, box-shadow;
+  flex-shrink: 0;
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 140, 100, 0.95) 0%,
+    var(--accent-bright) 35%,
+    var(--accent) 100%
+  );
+  box-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 20px rgba(255, 50, 30, 0.35);
+  animation: led-bar-pulse var(--led-bar-pulse) ease-in-out infinite;
+  will-change: opacity, box-shadow;
 }
 
-.led:nth-child(1) { animation-delay: 0s; }
-.led:nth-child(2) { animation-delay: 0.18s; }
-.led:nth-child(3) { animation-delay: 0.36s; }
-.led:nth-child(4) { animation-delay: 0.54s; }
-.led:nth-child(5) { animation-delay: 0.72s; }
-.led:nth-child(6) { animation-delay: 0.9s; }
-.led:nth-child(7) { animation-delay: 1.08s; }
-.led:nth-child(8) { animation-delay: 1.26s; }
-.led:nth-child(9) { animation-delay: 1.44s; }
-.led:nth-child(10) { animation-delay: 1.62s; }
-.led:nth-child(11) { animation-delay: 1.8s; }
-
-.led-rail--brand {
-  padding-top: 0.15rem;
+.led-bar--brand {
+  width: 4px;
+  align-self: stretch;
+  min-height: 4.25rem;
 }
 
 .wrap {
@@ -222,13 +183,13 @@ body {
 }
 
 .brand-tag-led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-bright);
-  box-shadow: 0 0 12px var(--accent-glow);
+  width: 1.35em;
+  height: 3px;
+  border-radius: 2px;
   flex-shrink: 0;
-  animation: tag-led-blink 2.8s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: led-bar-pulse 2.8s ease-in-out infinite;
 }
 
 .brand-text h1 {
@@ -266,17 +227,16 @@ body {
   pointer-events: none;
   z-index: 2;
   border-radius: var(--radius) var(--radius) 0 0;
-  background: repeating-linear-gradient(
+  background: linear-gradient(
     90deg,
-    transparent 0,
-    transparent 4px,
-    var(--accent) 4px,
-    var(--accent-bright) 7px,
-    transparent 7px,
-    transparent 12px
+    rgba(255, 60, 40, 0.15) 0%,
+    var(--accent) 20%,
+    var(--accent-bright) 50%,
+    var(--accent) 80%,
+    rgba(255, 60, 40, 0.15) 100%
   );
-  opacity: 0.7;
-  animation: led-strip-glow 2.2s ease-in-out infinite;
+  box-shadow: 0 0 14px rgba(255, 50, 30, 0.35);
+  animation: led-bar-pulse 2.2s ease-in-out infinite;
 }
 
 .panel::after {
@@ -354,15 +314,14 @@ body {
 .tab--active::after {
   content: "";
   position: absolute;
-  bottom: 4px;
-  left: 50%;
-  width: 6px;
-  height: 6px;
-  margin-left: -3px;
-  border-radius: 50%;
-  background: var(--accent-bright);
+  bottom: 3px;
+  left: 14%;
+  right: 14%;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright), var(--accent));
   box-shadow: 0 0 8px var(--accent), 0 0 14px var(--accent-glow);
-  animation: led-pulse 1.8s ease-in-out infinite;
+  animation: led-bar-pulse 1.8s ease-in-out infinite;
 }
 
 .scope-row {
@@ -873,7 +832,7 @@ tfoot td.str {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .led,
+  .led-bar,
   .led-ambient,
   .panel::before,
   .panel::after,
@@ -882,9 +841,10 @@ tfoot td.str {
     animation: none;
   }
 
-  .led {
-    opacity: 0.85;
-    box-shadow: 0 0 8px var(--accent-glow);
+  .led-bar,
+  .brand-tag-led {
+    opacity: 0.9;
+    box-shadow: 0 0 10px var(--accent-glow);
   }
 }
 
@@ -899,8 +859,11 @@ tfoot td.str {
     text-align: center;
   }
 
-  .led-rail--brand {
-    justify-content: center;
+  .led-bar--brand {
+    width: 100%;
+    min-height: 0;
+    height: 4px;
+    align-self: center;
   }
 
   .panel--toolbar {
