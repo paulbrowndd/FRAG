@@ -447,6 +447,19 @@ body {
   color: var(--text);
 }
 
+.attendance-teams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+}
+
+.attendance-team-stat strong {
+  color: var(--accent-bright);
+  font-weight: 600;
+}
+
 .attendance-guests {
   color: var(--muted);
 }
@@ -470,6 +483,18 @@ body {
   margin: 0.45rem 0 0;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.attendance-missing-team {
+  margin: 0.35rem 0 0;
+}
+
+.attendance-missing-team:first-child {
+  margin-top: 0;
+}
+
+.attendance-missing-team strong {
+  color: var(--accent-bright);
 }
 
 /* MVP */

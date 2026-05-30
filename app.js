@@ -70,6 +70,11 @@
       : {};
   }
 
+  function getMemberTeam(name) {
+    const teams = window.GUILD_MEMBER_TEAMS;
+    return teams && typeof teams === "object" ? teams[name] || null : null;
+  }
+
   function buildRosterIndex() {
     const map = new Map();
     for (const name of getGuildRoster()) {
@@ -178,17 +183,49 @@
     const warNote =
       wars === 1 ? "1 war" : wars > 1 ? `${wars} wars` : "no wars logged";
 
+    const teamOrder = ["Ball", "Defense", "Sailor"];
+    const teamStats = new Map();
+    for (const name of getGuildRoster()) {
+      const team = getMemberTeam(name) || "Unassigned";
+      if (!teamStats.has(team)) teamStats.set(team, { roster: 0, present: 0, missing: [] });
+      const stat = teamStats.get(team);
+      stat.roster += 1;
+      if (present.has(name)) stat.present += 1;
+      else stat.missing.push(name);
+    }
+
+    const teamSummary = teamOrder
+      .filter((team) => teamStats.has(team))
+      .map((team) => {
+        const stat = teamStats.get(team);
+        return `<span class="attendance-team-stat"><strong>${escapeHtml(team)}</strong> ${stat.present}/${stat.roster}</span>`;
+      })
+      .join("");
+
+    const missingByTeam = teamOrder
+      .filter((team) => teamStats.get(team)?.missing.length)
+      .map((team) => {
+        const names = teamStats
+          .get(team)
+          .missing.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+          .map((n) => escapeHtml(n))
+          .join(", ");
+        return `<p class="attendance-missing-team"><strong>${escapeHtml(team)}</strong> (${teamStats.get(team).missing.length}): ${names}</p>`;
+      })
+      .join("");
+
     attendancePanel.hidden = false;
     attendancePanel.innerHTML = `
       <p class="attendance-summary">
         <strong>${present.size}</strong> of <strong>${rosterSize}</strong> guild members in ${escapeHtml(periodLabel)}
         (${escapeHtml(warNote)}).
       </p>
+      ${teamSummary ? `<p class="attendance-teams">${teamSummary}</p>` : ""}
       ${
         missing.length
           ? `<details class="attendance-missing">
               <summary>Absent (${missing.length})</summary>
-              <p class="attendance-missing-list">${missing.map((n) => escapeHtml(n)).join(", ")}</p>
+              <div class="attendance-missing-list">${missingByTeam || `<p>${missing.map((n) => escapeHtml(n)).join(", ")}</p>`}</div>
             </details>`
           : `<p class="attendance-all">Full guild attendance for ${escapeHtml(periodLabel)}.</p>`
       }
