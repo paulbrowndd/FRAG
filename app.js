@@ -42,6 +42,10 @@
   const defenseMvpWinner = document.getElementById("defense-mvp-winner");
   const defenseMvpBreakdown = document.getElementById("defense-mvp-breakdown");
   const defenseMvpLeaderboard = document.getElementById("defense-mvp-leaderboard");
+  const defenseWheelCanvas = document.getElementById("defense-wheel-canvas");
+  const defenseWheelSpinBtn = document.getElementById("defense-wheel-spin");
+  const defenseWheelResult = document.getElementById("defense-wheel-result");
+  const defenseWheelTally = document.getElementById("defense-wheel-tally");
   const attendancePanel = document.getElementById("attendance-panel");
 
   const MVP_COMPONENTS = [
@@ -70,6 +74,14 @@
   let sortDir = "asc";
 
   let rosterIndex = null;
+  let defenseWheelRotation = 0;
+  let defenseWheelSpinning = false;
+  let defenseWheelAnimId = null;
+  let defenseWheelEntries = [];
+  let defenseWheelMonthKey = "";
+  let defenseWheelNameColors = new Map();
+
+  const DEFENSE_WHEEL_COLORS = ["#2a5080", "#3a6898", "#1e4068", "#4a78a8", "#234868", "#5278a0"];
 
   function getGuildRoster() {
     return Array.isArray(window.GUILD_ROSTER) ? window.GUILD_ROSTER : [];
@@ -133,6 +145,45 @@
 
   function filterDefenseRows(rows) {
     return filterGuildRows(rows).filter((r) => getMemberTeam(resolveGuildName(r.familyName)) === "Defense");
+  }
+
+  function getDefenseRoster() {
+    return getGuildRoster()
+      .filter((name) => getMemberTeam(name) === "Defense")
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }
+
+  /** Defense members present on a single war date. */
+  function defensePresentOnDate(data, dateKey) {
+    const day = data[dateKey];
+    if (!day || !Array.isArray(day.rows)) return [];
+    const present = new Set();
+    for (const r of day.rows) {
+      const canon = resolveGuildName(r.familyName);
+      if (canon && getMemberTeam(canon) === "Defense") present.add(canon);
+    }
+    return Array.from(present).sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: "base" })
+    );
+  }
+
+  /**
+   * One wheel entry per war day attended (chronological).
+   * Returns { entries, counts, warsLogged }.
+   */
+  function buildDefenseWheelEntries(data, dateKeys) {
+    const entries = [];
+    const counts = new Map();
+    const keys = [...dateKeys].sort();
+
+    for (const dk of keys) {
+      for (const name of defensePresentOnDate(data, dk)) {
+        entries.push(name);
+        counts.set(name, (counts.get(name) || 0) + 1);
+      }
+    }
+
+    return { entries, counts, warsLogged: keys.length };
   }
 
   function getPeriodDateKeys(data) {
@@ -619,28 +670,245 @@
 
   function renderDefenseMvpSection(rows) {
     if (!defenseMvpSection) return;
-    const defenseRows = filterDefenseRows(rows);
-    const show = currentView === VIEW.MONTHLY && defenseRows.length > 0;
+    const data = getWarData();
+    const monthKeys = currentView === VIEW.MONTHLY ? getPeriodDateKeys(data) : [];
+    const show = currentView === VIEW.MONTHLY && monthKeys.length > 0;
     defenseMvpSection.hidden = !show;
     if (!show) return;
 
-    const ranked = computeDefenseMvpScores(defenseRows);
-    const winner = ranked[0];
+    const defenseRows = filterDefenseRows(rows);
 
-    defenseMvpWinner.innerHTML = `
-      <p class="mvp-winner-label">Defense MVP</p>
-      <p class="mvp-winner-name">${formatFamilyNameCell(winner.familyName)}</p>
-      <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
-    `;
+    if (defenseRows.length > 0) {
+      const ranked = computeDefenseMvpScores(defenseRows);
+      const winner = ranked[0];
 
-    defenseMvpBreakdown.innerHTML = DEFENSE_MVP_COMPONENTS.map(
-      (c) => `<div>
-        <dt>${escapeHtml(c.label)}</dt>
-        <dd class="mvp-weight">${escapeHtml(formatMvpWeight(c.weight))}</dd>
-      </div>`
-    ).join("");
+      defenseMvpWinner.innerHTML = `
+        <p class="mvp-winner-label">Defense MVP</p>
+        <p class="mvp-winner-name">${formatFamilyNameCell(winner.familyName)}</p>
+        <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
+      `;
 
-    renderMvpLeaderboard(defenseMvpLeaderboard, ranked);
+      defenseMvpBreakdown.innerHTML = DEFENSE_MVP_COMPONENTS.map(
+        (c) => `<div>
+          <dt>${escapeHtml(c.label)}</dt>
+          <dd class="mvp-weight">${escapeHtml(formatMvpWeight(c.weight))}</dd>
+        </div>`
+      ).join("");
+
+      renderMvpLeaderboard(defenseMvpLeaderboard, ranked);
+    } else {
+      defenseMvpWinner.innerHTML = `
+        <p class="mvp-winner-label">Defense MVP</p>
+        <p class="mvp-winner-score">No Defense stats this month.</p>
+      `;
+      defenseMvpBreakdown.innerHTML = "";
+      defenseMvpLeaderboard.innerHTML = "";
+    }
+
+    updateDefenseWheel();
+  }
+
+  function truncateWheelLabel(name, maxLen = 11) {
+    const text = String(name || "");
+    return text.length <= maxLen ? text : `${text.slice(0, maxLen - 1)}…`;
+  }
+
+  function buildDefenseWheelNameColors(entries) {
+    const colors = new Map();
+    let idx = 0;
+    for (const name of entries) {
+      if (!colors.has(name)) {
+        colors.set(name, DEFENSE_WHEEL_COLORS[idx % DEFENSE_WHEEL_COLORS.length]);
+        idx += 1;
+      }
+    }
+    return colors;
+  }
+
+  function renderDefenseWheelTally(entries, counts, warsLogged) {
+    if (!defenseWheelTally) return;
+
+    if (!entries.length) {
+      defenseWheelTally.textContent = "No Defense attendance logged this month yet.";
+      return;
+    }
+
+    const unique = counts.size;
+    const summary = Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+      .map(([name, count]) => `${name} ×${count}`)
+      .join(", ");
+
+    defenseWheelTally.textContent = `${entries.length} ${entries.length === 1 ? "entry" : "entries"} across ${warsLogged} logged ${warsLogged === 1 ? "war" : "wars"} · ${unique} ${unique === 1 ? "player" : "players"} · ${summary}`;
+  }
+
+  function drawDefenseWheel(entries = defenseWheelEntries) {
+    if (!defenseWheelCanvas) return;
+    const ctx = defenseWheelCanvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const size = 320;
+    defenseWheelCanvas.width = size * dpr;
+    defenseWheelCanvas.height = size * dpr;
+    defenseWheelCanvas.style.width = `${size}px`;
+    defenseWheelCanvas.style.height = `${size}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+
+    const cx = size / 2;
+    const cy = size / 2;
+    const radius = size / 2 - 8;
+
+    if (!entries.length) {
+      ctx.fillStyle = "#9a8f8c";
+      ctx.font = "600 14px Segoe UI, system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("No entries yet", cx, cy - 8);
+      ctx.font = "500 12px Segoe UI, system-ui, sans-serif";
+      ctx.fillText("Attend node wars to add names", cx, cy + 12);
+      return;
+    }
+
+    const slice = (Math.PI * 2) / entries.length;
+    const minLabelSlice = (12 * Math.PI) / 180;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((defenseWheelRotation * Math.PI) / 180);
+
+    entries.forEach((name, i) => {
+      const start = i * slice - Math.PI / 2;
+      const end = start + slice;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radius, start, end);
+      ctx.closePath();
+      ctx.fillStyle = defenseWheelNameColors.get(name) || DEFENSE_WHEEL_COLORS[0];
+      ctx.fill();
+      ctx.strokeStyle = "rgba(168, 212, 245, 0.35)";
+      ctx.lineWidth = entries.length > 40 ? 0.75 : 1.5;
+      ctx.stroke();
+
+      if (slice >= minLabelSlice) {
+        ctx.save();
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#f2ece8";
+        const fontSize = entries.length > 24 ? 8 : entries.length > 14 ? 9 : 11;
+        ctx.font = `700 ${fontSize}px Segoe UI, system-ui, sans-serif`;
+        ctx.fillText(truncateWheelLabel(name, entries.length > 20 ? 8 : 11), radius - 10, 0);
+        ctx.restore();
+      }
+    });
+
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+    ctx.fillStyle = "#0f1218";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(168, 212, 245, 0.55)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "#a8d4f5";
+    ctx.font = "700 11px Segoe UI, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(String(entries.length), cx, cy);
+  }
+
+  function updateDefenseWheel() {
+    if (!defenseWheelCanvas || !defenseWheelSpinBtn || currentView !== VIEW.MONTHLY) return;
+
+    const data = getWarData();
+    const monthKeys = getPeriodDateKeys(data);
+    const monthKey = monthKeys[0] ? monthKeyUTC(monthKeys[0]) : currentMonth || "";
+
+    if (monthKey && monthKey !== defenseWheelMonthKey && !defenseWheelSpinning) {
+      defenseWheelMonthKey = monthKey;
+      defenseWheelRotation = 0;
+      if (defenseWheelResult) {
+        defenseWheelResult.hidden = true;
+        defenseWheelResult.textContent = "";
+      }
+    }
+
+    const { entries, counts, warsLogged } = buildDefenseWheelEntries(data, monthKeys);
+    defenseWheelEntries = entries;
+    defenseWheelNameColors = buildDefenseWheelNameColors(entries);
+
+    drawDefenseWheel(entries);
+    renderDefenseWheelTally(entries, counts, warsLogged);
+
+    defenseWheelSpinBtn.disabled = defenseWheelSpinning || entries.length === 0;
+    if (entries.length === 0 && defenseWheelResult && !defenseWheelSpinning) {
+      defenseWheelResult.hidden = false;
+      defenseWheelResult.textContent = "Log Defense attendance this month to enable the spin.";
+    }
+  }
+
+  function spinDefenseWheel() {
+    const entries = defenseWheelEntries;
+    if (defenseWheelSpinning || entries.length === 0 || !defenseWheelSpinBtn) return;
+
+    if (defenseWheelAnimId) cancelAnimationFrame(defenseWheelAnimId);
+
+    defenseWheelSpinning = true;
+    defenseWheelSpinBtn.disabled = true;
+    if (defenseWheelResult) defenseWheelResult.hidden = true;
+
+    const slice = 360 / entries.length;
+    const winIndex = Math.floor(Math.random() * entries.length);
+    const winner = entries[winIndex];
+    const winnerCount = entries.filter((n) => n === winner).length;
+    const extraSpins = 5 + Math.floor(Math.random() * 4);
+    const targetMod = ((360 - (winIndex + 0.5) * slice) % 360 + 360) % 360;
+    const currentMod = ((defenseWheelRotation % 360) + 360) % 360;
+    let delta = targetMod - currentMod;
+    if (delta <= 0) delta += 360;
+    const finalRotation = defenseWheelRotation + extraSpins * 360 + delta;
+    const startRotation = defenseWheelRotation;
+    const duration = 4500;
+    const startTime = performance.now();
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function frame(now) {
+      const t = Math.min(1, (now - startTime) / duration);
+      defenseWheelRotation = startRotation + (finalRotation - startRotation) * easeOutCubic(t);
+      drawDefenseWheel(entries);
+
+      if (t < 1) {
+        defenseWheelAnimId = requestAnimationFrame(frame);
+        return;
+      }
+
+      defenseWheelRotation = finalRotation;
+      defenseWheelSpinning = false;
+      defenseWheelAnimId = null;
+      defenseWheelSpinBtn.disabled = false;
+      drawDefenseWheel(entries);
+
+      if (defenseWheelResult) {
+        defenseWheelResult.hidden = false;
+        defenseWheelResult.innerHTML = `Gift card winner: <strong>${escapeHtml(winner)}</strong> · ${winnerCount} ${winnerCount === 1 ? "entry" : "entries"} this month`;
+      }
+    }
+
+    defenseWheelAnimId = requestAnimationFrame(frame);
+  }
+
+  function initDefenseWheel() {
+    if (!defenseWheelSpinBtn) return;
+    defenseWheelSpinBtn.addEventListener("click", spinDefenseWheel);
+    updateDefenseWheel();
   }
 
   function aggregateByFamily(data, dateKeys) {
@@ -994,6 +1262,8 @@
       currentMonth = this.value;
       renderBody();
     });
+
+    initDefenseWheel();
 
     search.addEventListener("input", renderBody);
 

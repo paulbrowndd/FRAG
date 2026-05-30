@@ -687,6 +687,111 @@ body {
   color: #a8d4f5;
 }
 
+.defense-wheel {
+  margin-top: 1.25rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid rgba(80, 140, 200, 0.25);
+  text-align: center;
+}
+
+.defense-wheel-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #a8d4f5;
+}
+
+.defense-wheel-sub {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 52ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.defense-wheel-tally {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: rgba(50, 100, 160, 0.12);
+  border: 1px solid rgba(80, 140, 200, 0.22);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #c8dff5;
+  text-align: left;
+}
+
+.defense-wheel-stage {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+.defense-wheel-pointer {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 22px solid #a8d4f5;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  z-index: 2;
+}
+
+#defense-wheel-canvas {
+  display: block;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 3px rgba(80, 140, 200, 0.35),
+    0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.defense-wheel-spin-btn {
+  margin-top: 1rem;
+  padding: 0.65rem 1.6rem;
+  border: 1px solid rgba(80, 140, 200, 0.45);
+  border-radius: var(--radius-sm);
+  background: rgba(50, 100, 160, 0.22);
+  color: #a8d4f5;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.defense-wheel-spin-btn:hover:not(:disabled) {
+  background: rgba(50, 100, 160, 0.34);
+  border-color: rgba(168, 212, 245, 0.55);
+}
+
+.defense-wheel-spin-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.defense-wheel-spin-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.defense-wheel-result {
+  margin: 0.85rem 0 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.defense-wheel-result strong {
+  color: #a8d4f5;
+  font-size: 1.15rem;
+}
+
 /* Table */
 .table-scroll {
   overflow: auto;
