@@ -38,6 +38,10 @@
   const mvpWinner = document.getElementById("mvp-winner");
   const mvpBreakdown = document.getElementById("mvp-breakdown");
   const mvpLeaderboard = document.getElementById("mvp-leaderboard");
+  const defenseMvpSection = document.getElementById("defense-mvp-section");
+  const defenseMvpWinner = document.getElementById("defense-mvp-winner");
+  const defenseMvpBreakdown = document.getElementById("defense-mvp-breakdown");
+  const defenseMvpLeaderboard = document.getElementById("defense-mvp-leaderboard");
   const attendancePanel = document.getElementById("attendance-panel");
 
   const MVP_COMPONENTS = [
@@ -49,6 +53,13 @@
     { key: "timeSurvived", label: "Time survived", weight: 0.1 },
     { key: "damageTaken", label: "Damage taken", weight: 0.05 },
     { key: "deaths", label: "Low deaths", weight: 0.05 },
+  ];
+
+  const DEFENSE_MVP_COMPONENTS = [
+    { key: "ccHits", label: "CC hits", weight: 0.3 },
+    { key: "trapsTriggered", label: "Traps triggered", weight: 0.3 },
+    { key: "timeSurvived", label: "Time survived", weight: 0.3 },
+    { key: "allyHp", label: "Ally HP", weight: 0.1 },
   ];
 
   let currentView = VIEW.DAILY;
@@ -118,6 +129,10 @@
 
   function filterGuildRows(rows) {
     return rows.filter((r) => isGuildMember(r.familyName));
+  }
+
+  function filterDefenseRows(rows) {
+    return filterGuildRows(rows).filter((r) => getMemberTeam(resolveGuildName(r.familyName)) === "Defense");
   }
 
   function getPeriodDateKeys(data) {
@@ -513,6 +528,47 @@
       );
   }
 
+  function defenseMvpMetricsFromRow(row) {
+    return {
+      ccHits: Number(row.ccHits) || 0,
+      trapsTriggered: Number(row.trapsTriggered) || 0,
+      timeSurvived: parseTimeToSeconds(row.timeSurvived),
+      allyHp: parseGameNumber(row.allyHp),
+    };
+  }
+
+  /** Defense MVP: weighted score vs Defense-high for each category. */
+  function computeDefenseMvpScores(rows) {
+    if (!rows.length) return [];
+    const withMetrics = rows.map((row) => ({
+      familyName: row.familyName,
+      m: defenseMvpMetricsFromRow(row),
+    }));
+    const max = {
+      ccHits: Math.max(...withMetrics.map((x) => x.m.ccHits)),
+      trapsTriggered: Math.max(...withMetrics.map((x) => x.m.trapsTriggered)),
+      timeSurvived: Math.max(...withMetrics.map((x) => x.m.timeSurvived)),
+      allyHp: Math.max(...withMetrics.map((x) => x.m.allyHp)),
+    };
+
+    return withMetrics
+      .map(({ familyName, m }) => {
+        const parts = {
+          ccHits: 0.3 * safeRatio(m.ccHits, max.ccHits),
+          trapsTriggered: 0.3 * safeRatio(m.trapsTriggered, max.trapsTriggered),
+          timeSurvived: 0.3 * safeRatio(m.timeSurvived, max.timeSurvived),
+          allyHp: 0.1 * safeRatio(m.allyHp, max.allyHp),
+        };
+        const score = Object.values(parts).reduce((sum, v) => sum + v, 0);
+        return { familyName, score, parts };
+      })
+      .sort(
+        (a, b) =>
+          b.score - a.score ||
+          a.familyName.localeCompare(b.familyName, undefined, { sensitivity: "base" })
+      );
+  }
+
   function formatMvpScore(score) {
     return `${(score * 100).toFixed(1)}%`;
   }
@@ -520,6 +576,19 @@
   function formatMvpWeight(weight) {
     const pct = weight * 100;
     return Number.isInteger(pct) ? `${pct}%` : `${pct.toFixed(1)}%`;
+  }
+
+  function renderMvpLeaderboard(leaderboardEl, ranked, topN = 10) {
+    leaderboardEl.innerHTML = ranked.slice(0, topN)
+      .map((entry, i) => {
+        const first = i === 0 ? " mvp-rank-item--first" : "";
+        return `<li class="mvp-rank-item${first}">
+          <span class="mvp-rank-num">${i + 1}</span>
+          <span class="mvp-rank-name">${formatFamilyNameCell(entry.familyName)}</span>
+          <span class="mvp-rank-score">${escapeHtml(formatMvpScore(entry.score))}</span>
+        </li>`;
+      })
+      .join("");
   }
 
   function renderMvpSection(rows) {
@@ -531,7 +600,6 @@
 
     const ranked = computeMvpScores(guildRows);
     const winner = ranked[0];
-    const topN = ranked.slice(0, 10);
 
     mvpWinner.innerHTML = `
       <p class="mvp-winner-label">MVP</p>
@@ -546,16 +614,33 @@
       </div>`
     ).join("");
 
-    mvpLeaderboard.innerHTML = topN
-      .map((entry, i) => {
-        const first = i === 0 ? " mvp-rank-item--first" : "";
-        return `<li class="mvp-rank-item${first}">
-          <span class="mvp-rank-num">${i + 1}</span>
-          <span class="mvp-rank-name">${formatFamilyNameCell(entry.familyName)}</span>
-          <span class="mvp-rank-score">${escapeHtml(formatMvpScore(entry.score))}</span>
-        </li>`;
-      })
-      .join("");
+    renderMvpLeaderboard(mvpLeaderboard, ranked);
+  }
+
+  function renderDefenseMvpSection(rows) {
+    if (!defenseMvpSection) return;
+    const defenseRows = filterDefenseRows(rows);
+    const show = currentView === VIEW.MONTHLY && defenseRows.length > 0;
+    defenseMvpSection.hidden = !show;
+    if (!show) return;
+
+    const ranked = computeDefenseMvpScores(defenseRows);
+    const winner = ranked[0];
+
+    defenseMvpWinner.innerHTML = `
+      <p class="mvp-winner-label">Defense MVP</p>
+      <p class="mvp-winner-name">${formatFamilyNameCell(winner.familyName)}</p>
+      <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
+    `;
+
+    defenseMvpBreakdown.innerHTML = DEFENSE_MVP_COMPONENTS.map(
+      (c) => `<div>
+        <dt>${escapeHtml(c.label)}</dt>
+        <dd class="mvp-weight">${escapeHtml(formatMvpWeight(c.weight))}</dd>
+      </div>`
+    ).join("");
+
+    renderMvpLeaderboard(defenseMvpLeaderboard, ranked);
   }
 
   function aggregateByFamily(data, dateKeys) {
@@ -743,6 +828,7 @@
 
     const guildFiltered = filterGuildRows(rows);
     renderMvpSection(guildFiltered);
+    renderDefenseMvpSection(guildFiltered);
 
     const q = (search.value || "").trim().toLowerCase();
     const total = guildFiltered.length;

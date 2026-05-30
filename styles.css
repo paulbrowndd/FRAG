@@ -654,6 +654,39 @@ body {
   color: var(--accent-bright);
 }
 
+.mvp-section--defense {
+  border-color: rgba(80, 140, 200, 0.35);
+  background: linear-gradient(160deg, var(--surface) 0%, #0f1218 100%);
+}
+
+.mvp-section--defense .mvp-title {
+  color: #a8d4f5;
+}
+
+.mvp-section--defense .mvp-winner {
+  background: rgba(50, 100, 160, 0.12);
+  border-color: rgba(80, 140, 200, 0.35);
+  box-shadow: inset 0 0 24px rgba(80, 140, 200, 0.08);
+}
+
+.mvp-section--defense .mvp-winner-label {
+  color: #7eb8e8;
+}
+
+.mvp-section--defense .mvp-winner-score,
+.mvp-section--defense .mvp-breakdown dd.mvp-weight {
+  color: #a8d4f5;
+}
+
+.mvp-section--defense .mvp-rank-item--first {
+  border-color: rgba(80, 140, 200, 0.45);
+  background: rgba(50, 100, 160, 0.16);
+}
+
+.mvp-section--defense .mvp-rank-item--first .mvp-rank-score {
+  color: #a8d4f5;
+}
+
 /* Table */
 .table-scroll {
   overflow: auto;
