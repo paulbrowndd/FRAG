@@ -75,6 +75,15 @@
     return teams && typeof teams === "object" ? teams[name] || null : null;
   }
 
+  function formatFamilyNameCell(warName) {
+    const name = String(warName || "");
+    const canon = resolveGuildName(name) || name;
+    const team = getMemberTeam(canon);
+    if (!team) return escapeHtml(name);
+    const teamClass = `player-team player-team--${team.toLowerCase()}`;
+    return `<span class="player-name">${escapeHtml(name)}</span><span class="${teamClass}">${escapeHtml(team)}</span>`;
+  }
+
   function buildRosterIndex() {
     const map = new Map();
     for (const name of getGuildRoster()) {
@@ -526,7 +535,7 @@
 
     mvpWinner.innerHTML = `
       <p class="mvp-winner-label">MVP</p>
-      <p class="mvp-winner-name">${escapeHtml(winner.familyName)}</p>
+      <p class="mvp-winner-name">${formatFamilyNameCell(winner.familyName)}</p>
       <p class="mvp-winner-score">Overall score ${escapeHtml(formatMvpScore(winner.score))}</p>
     `;
 
@@ -542,7 +551,7 @@
         const first = i === 0 ? " mvp-rank-item--first" : "";
         return `<li class="mvp-rank-item${first}">
           <span class="mvp-rank-num">${i + 1}</span>
-          <span class="mvp-rank-name">${escapeHtml(entry.familyName)}</span>
+          <span class="mvp-rank-name">${formatFamilyNameCell(entry.familyName)}</span>
           <span class="mvp-rank-score">${escapeHtml(formatMvpScore(entry.score))}</span>
         </li>`;
       })
@@ -738,7 +747,11 @@
     const q = (search.value || "").trim().toLowerCase();
     const total = guildFiltered.length;
     let filtered = q
-      ? guildFiltered.filter((r) => String(r.familyName).toLowerCase().includes(q))
+      ? guildFiltered.filter((r) => {
+          const name = String(r.familyName).toLowerCase();
+          const team = (getMemberTeam(resolveGuildName(r.familyName) || r.familyName) || "").toLowerCase();
+          return name.includes(q) || team.includes(q);
+        })
       : guildFiltered.slice();
     filtered = sortRowsInPlace(filtered);
 
@@ -762,6 +775,9 @@
         const tds = COLS.map((c) => {
           const v = r[c.key];
           const cls = c.type === "text" ? "" : c.type;
+          if (c.key === "familyName") {
+            return `<td class="${cls}">${formatFamilyNameCell(v)}</td>`;
+          }
           return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
         }).join("");
         return `<tr>${tds}</tr>`;
