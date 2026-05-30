@@ -18,7 +18,14 @@
     { key: "timeSurvived", label: "Time survived", type: "str" },
   ];
 
-  const VIEW = { DAILY: "daily", WEEKLY: "weekly", MONTHLY: "monthly", LIFETIME: "lifetime" };
+  const VIEW = { DAILY: "daily", WEEKLY: "weekly", MONTHLY: "monthly", LIFETIME: "lifetime", ATTENDANCE: "attendance" };
+
+  const ATTENDANCE_COLS = [
+    { key: "familyName", label: "Family name", type: "text" },
+    { key: "team", label: "Team", type: "text" },
+    { key: "nodeWars", label: "Node wars", type: "num" },
+    { key: "siege", label: "Siege", type: "num" },
+  ];
 
   const thead = document.getElementById("thead");
   const tbody = document.getElementById("tbody");
@@ -194,7 +201,7 @@
       const dk = currentDate && data[currentDate] ? currentDate : keys[keys.length - 1];
       return [dk];
     }
-    if (currentView === VIEW.WEEKLY) {
+    if (currentView === VIEW.WEEKLY || currentView === VIEW.ATTENDANCE) {
       const weeks = uniqueWeekStarts(data);
       const sun =
         currentWeekSunday && weeks.some((w) => w.sunday === currentWeekSunday)
@@ -305,6 +312,76 @@
           : `<p class="attendance-all">Full guild attendance for ${escapeHtml(periodLabel)}.</p>`
       }
     `;
+  }
+
+  function dayOfWeekUTC(iso) {
+    return parseISOUTC(iso).getUTCDay();
+  }
+
+  function isSiegeDate(iso) {
+    return dayOfWeekUTC(iso) === 6;
+  }
+
+  function classifyWeekWarDates(data, sundayIso) {
+    const weekDates = datesInWeek(data, sundayIso);
+    const nodeWarDates = weekDates.filter((d) => !isSiegeDate(d));
+    const siegeDates = weekDates.filter((d) => isSiegeDate(d));
+    return { weekDates, nodeWarDates, siegeDates };
+  }
+
+  function presentCanonicalOnDate(data, dateKey) {
+    const day = data[dateKey];
+    if (!day || !Array.isArray(day.rows)) return new Set();
+    const present = new Set();
+    for (const r of day.rows) {
+      const canon = resolveGuildName(r.familyName);
+      if (canon) present.add(canon);
+    }
+    return present;
+  }
+
+  function buildWeeklyAttendanceRows(data, sundayIso) {
+    const { nodeWarDates, siegeDates } = classifyWeekWarDates(data, sundayIso);
+    const rows = getGuildRoster().map((name) => ({
+      familyName: name,
+      team: getMemberTeam(name) || "—",
+      nodeWars: 0,
+      siege: 0,
+    }));
+
+    const byName = new Map(rows.map((r) => [r.familyName, r]));
+
+    for (const dk of nodeWarDates) {
+      for (const name of presentCanonicalOnDate(data, dk)) {
+        const row = byName.get(name);
+        if (row) row.nodeWars += 1;
+      }
+    }
+
+    for (const dk of siegeDates) {
+      for (const name of presentCanonicalOnDate(data, dk)) {
+        const row = byName.get(name);
+        if (row) row.siege += 1;
+      }
+    }
+
+    return { rows, nodeWarDates, siegeDates };
+  }
+
+  function formatWeekAttendanceMeta(sundayIso, nodeWarDates, siegeDates) {
+    const siegeNote =
+      siegeDates.length === 0
+        ? "no siege logged"
+        : siegeDates.length === 1
+          ? `siege ${formatShortDate(siegeDates[0])}`
+          : `${siegeDates.length} sieges logged`;
+    return `Week ${formatWeekRangeLabel(sundayIso)} · ${nodeWarDates.length} node war${
+      nodeWarDates.length === 1 ? "" : "s"
+    } · ${siegeNote}`;
+  }
+
+  function getActiveCols() {
+    return currentView === VIEW.ATTENDANCE ? ATTENDANCE_COLS : COLS;
   }
 
   function getWarData() {
@@ -967,13 +1044,14 @@
   }
 
   function colDefByKey(key) {
-    return COLS.find((c) => c.key === key);
+    return getActiveCols().find((c) => c.key === key);
   }
 
   function cellSortValue(row, colDef) {
     const v = row[colDef.key];
     switch (colDef.key) {
       case "familyName":
+      case "team":
         return String(v || "").toLowerCase();
       case "timeDead":
       case "timeSurvived":
@@ -1025,7 +1103,8 @@
   }
 
   function renderHead() {
-    thead.innerHTML = COLS.map((c) => {
+    const cols = getActiveCols();
+    thead.innerHTML = cols.map((c) => {
       const align = c.type === "text" ? "th--text" : "th--num";
       const num = c.type === "text" ? "" : c.type;
       return `<th class="th-sortable ${align}${num ? " " + num : ""}" scope="col">
@@ -1087,8 +1166,102 @@
     };
   }
 
+  function hideStatsPanels() {
+    if (attendancePanel) attendancePanel.hidden = true;
+    if (mvpSection) mvpSection.hidden = true;
+    if (defenseMvpSection) defenseMvpSection.hidden = true;
+  }
+
+  function renderAttendanceTabBody(data) {
+    hideStatsPanels();
+    renderHead();
+
+    const weeks = uniqueWeekStarts(data);
+    const sun =
+      currentWeekSunday && weeks.some((w) => w.sunday === currentWeekSunday)
+        ? currentWeekSunday
+        : weeks[0]?.sunday;
+
+    if (!sun) {
+      metaEl.textContent = "No war data logged";
+      tbody.innerHTML = `<tr><td colspan="${ATTENDANCE_COLS.length}" class="empty">No attendance data.</td></tr>`;
+      tfoot.innerHTML = "";
+      countEl.textContent = "0 players";
+      applyHeaderSortIndicators();
+      return;
+    }
+
+    const { rows, nodeWarDates, siegeDates } = buildWeeklyAttendanceRows(data, sun);
+    metaEl.textContent = formatWeekAttendanceMeta(sun, nodeWarDates, siegeDates);
+
+    const q = (search.value || "").trim().toLowerCase();
+    const total = rows.length;
+    let filtered = q
+      ? rows.filter((r) => {
+          const name = String(r.familyName).toLowerCase();
+          const team = String(r.team || "").toLowerCase();
+          return name.includes(q) || team.includes(q);
+        })
+      : rows.slice();
+    filtered = sortRowsInPlace(filtered);
+
+    countEl.textContent =
+      filtered.length === total
+        ? `${total} roster members`
+        : `${filtered.length} of ${total} roster members`;
+
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="${ATTENDANCE_COLS.length}" class="empty">No matching family names.</td></tr>`;
+      tfoot.innerHTML = "";
+      applyHeaderSortIndicators();
+      return;
+    }
+
+    tbody.innerHTML = filtered
+      .map((r) => {
+        const tds = ATTENDANCE_COLS.map((c) => {
+          const v = r[c.key];
+          const cls = c.type === "text" ? "" : c.type;
+          if (c.key === "familyName") {
+            return `<td class="${cls}">${formatFamilyNameCell(v)}</td>`;
+          }
+          if (c.key === "team" && v && v !== "—") {
+            const teamClass = `player-team player-team--${String(v).toLowerCase()}`;
+            return `<td class="${cls}"><span class="${teamClass}">${escapeHtml(String(v))}</span></td>`;
+          }
+          if (c.key === "siege" && v > 0) {
+            return `<td class="${cls} attendance-cell--present">${escapeHtml(String(v))}</td>`;
+          }
+          if (c.key === "nodeWars" && v > 0) {
+            return `<td class="${cls} attendance-cell--present">${escapeHtml(String(v))}</td>`;
+          }
+          return `<td class="${cls}${v === 0 ? " attendance-cell--zero" : ""}">${escapeHtml(String(v))}</td>`;
+        }).join("");
+        return `<tr>${tds}</tr>`;
+      })
+      .join("");
+
+    const totalNode = filtered.reduce((sum, r) => sum + r.nodeWars, 0);
+    const totalSiege = filtered.reduce((sum, r) => sum + r.siege, 0);
+    tfoot.innerHTML = `<tr>
+      <td>Averages (${filtered.length})</td>
+      <td></td>
+      <td class="num">${(totalNode / filtered.length).toFixed(1)}</td>
+      <td class="num">${(totalSiege / filtered.length).toFixed(1)}</td>
+    </tr>`;
+
+    applyHeaderSortIndicators();
+  }
+
   function renderBody() {
     const data = getWarData();
+
+    if (currentView === VIEW.ATTENDANCE) {
+      renderAttendanceTabBody(data);
+      return;
+    }
+
+    renderHead();
     const periodKeys = getPeriodDateKeys(data);
     const { rows, meta } = getRowsForView();
     metaEl.textContent = meta;
@@ -1118,7 +1291,7 @@
 
     if (!filtered.length) {
       const emptyMsg = "No matching family names.";
-      tbody.innerHTML = `<tr><td colspan="${COLS.length}" class="empty">${escapeHtml(emptyMsg)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${getActiveCols().length}" class="empty">${escapeHtml(emptyMsg)}</td></tr>`;
       tfoot.innerHTML = "";
       applyHeaderSortIndicators();
       return;
@@ -1126,7 +1299,8 @@
 
     tbody.innerHTML = filtered
       .map((r) => {
-        const tds = COLS.map((c) => {
+        const cols = getActiveCols();
+        const tds = cols.map((c) => {
           const v = r[c.key];
           const cls = c.type === "text" ? "" : c.type;
           if (c.key === "familyName") {
@@ -1140,7 +1314,7 @@
 
     const avgRow = computeAverageRow(filtered);
     tfoot.innerHTML = avgRow
-      ? `<tr>${COLS.map((c) => {
+      ? `<tr>${getActiveCols().map((c) => {
           const v = avgRow[c.key];
           const cls = c.type === "text" ? "" : c.type;
           return `<td class="${cls}">${escapeHtml(String(v))}</td>`;
@@ -1200,10 +1374,11 @@
     const daily = currentView === VIEW.DAILY;
     const weekly = currentView === VIEW.WEEKLY;
     const monthly = currentView === VIEW.MONTHLY;
+    const attendance = currentView === VIEW.ATTENDANCE;
     dateField.hidden = !daily;
-    weekField.hidden = !weekly;
+    weekField.hidden = !weekly && !attendance;
     monthField.hidden = !monthly;
-    scopeRow.hidden = !daily && !weekly && !monthly;
+    scopeRow.hidden = !daily && !weekly && !monthly && !attendance;
   }
 
   function setView(view) {

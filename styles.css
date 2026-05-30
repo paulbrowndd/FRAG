@@ -939,6 +939,16 @@ tbody td.str {
   color: #d8d0cc;
 }
 
+.attendance-cell--present {
+  color: var(--accent-bright);
+  font-weight: 700;
+}
+
+.attendance-cell--zero {
+  color: var(--muted);
+  opacity: 0.55;
+}
+
 .guest-tag {
   margin-left: 0.35rem;
   padding: 0.12rem 0.4rem;
