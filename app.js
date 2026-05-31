@@ -89,6 +89,7 @@
   let defenseWheelNameColors = new Map();
 
   const DEFENSE_WHEEL_COLORS = ["#2a5080", "#3a6898", "#1e4068", "#4a78a8", "#234868", "#5278a0"];
+  const DEFENSE_SIEGE_ENTRY_WEIGHT = 2;
 
   function getGuildRoster() {
     return Array.isArray(window.GUILD_ROSTER) ? window.GUILD_ROSTER : [];
@@ -175,7 +176,8 @@
   }
 
   /**
-   * One wheel entry per war day attended (chronological).
+   * Wheel entries by war day attended (chronological).
+   * Node wars = 1 entry; siege (Saturday) = 2 entries.
    * Returns { entries, counts, warsLogged }.
    */
   function buildDefenseWheelEntries(data, dateKeys) {
@@ -184,9 +186,10 @@
     const keys = [...dateKeys].sort();
 
     for (const dk of keys) {
+      const weight = isSiegeDate(dk) ? DEFENSE_SIEGE_ENTRY_WEIGHT : 1;
       for (const name of defensePresentOnDate(data, dk)) {
-        entries.push(name);
-        counts.set(name, (counts.get(name) || 0) + 1);
+        for (let i = 0; i < weight; i += 1) entries.push(name);
+        counts.set(name, (counts.get(name) || 0) + weight);
       }
     }
 
