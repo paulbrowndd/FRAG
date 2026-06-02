@@ -258,7 +258,7 @@
     if (currentView === VIEW.DAILY && dateKeys[0]) {
       periodLabel = formatShortDate(dateKeys[0]);
     } else if (currentView === VIEW.WEEKLY && dateKeys[0]) {
-      periodLabel = `week of ${formatWeekRangeLabel(sundayOfWeekUTC(dateKeys[0]))}`;
+      periodLabel = `Sun–Sat week ${formatWeekRangeLabel(sundayOfWeekUTC(dateKeys[0]))}`;
     } else if (currentView === VIEW.MONTHLY && dateKeys[0]) {
       periodLabel = formatMonthLabel(monthKeyUTC(dateKeys[0]));
     } else if (currentView === VIEW.LIFETIME) {
@@ -378,7 +378,7 @@
         : siegeDates.length === 1
           ? `siege ${formatShortDate(siegeDates[0])}`
           : `${siegeDates.length} sieges logged`;
-    return `Week ${formatWeekRangeLabel(sundayIso)} · ${nodeWarDates.length} node war${
+    return `Sun–Sat week ${formatWeekRangeLabel(sundayIso)} · ${nodeWarDates.length} node war${
       nodeWarDates.length === 1 ? "" : "s"
     } · ${siegeNote}`;
   }
@@ -410,6 +410,16 @@
     return dt.toISOString().slice(0, 10);
   }
 
+  /** Saturday (UTC) of the Sunday–Saturday week that starts on `sundayIso`. */
+  function saturdayOfWeekUTC(sundayIso) {
+    return addDaysUTC(sundayIso, 6);
+  }
+
+  /** Whether `iso` falls in the Sun–Sat week starting on `sundayIso` (inclusive). */
+  function isDateInWeekUTC(iso, sundayIso) {
+    return iso >= sundayIso && iso <= saturdayOfWeekUTC(sundayIso);
+  }
+
   function addDaysUTC(iso, n) {
     const dt = parseISOUTC(iso);
     dt.setUTCDate(dt.getUTCDate() + n);
@@ -426,9 +436,16 @@
     });
   }
 
+  function formatWeekdayShortUTC(iso) {
+    return parseISOUTC(iso).toLocaleDateString(undefined, {
+      weekday: "short",
+      timeZone: "UTC",
+    });
+  }
+
   function formatWeekRangeLabel(sundayIso) {
-    const saturday = addDaysUTC(sundayIso, 6);
-    return `${formatShortDate(sundayIso)} – ${formatShortDate(saturday)}`;
+    const saturday = saturdayOfWeekUTC(sundayIso);
+    return `${formatWeekdayShortUTC(sundayIso)}, ${formatShortDate(sundayIso)} – ${formatWeekdayShortUTC(saturday)}, ${formatShortDate(saturday)}`;
   }
 
   /** Calendar month key `YYYY-MM` (UTC) for an ISO date. */
@@ -1008,7 +1025,7 @@
   }
 
   function datesInWeek(data, sundayIso) {
-    return sortedDateKeys(data).filter((d) => sundayOfWeekUTC(d) === sundayIso);
+    return sortedDateKeys(data).filter((d) => isDateInWeekUTC(d, sundayIso));
   }
 
   function uniqueWeekStarts(data) {
@@ -1142,7 +1159,7 @@
           : weeks[0].sunday;
       const inWeek = datesInWeek(data, sun);
       const rows = aggregateByFamily(data, inWeek);
-      const meta = `Week ${formatWeekRangeLabel(sun)} · ${inWeek.length} war${
+      const meta = `Sun–Sat week ${formatWeekRangeLabel(sun)} · ${inWeek.length} war${
         inWeek.length === 1 ? "" : "s"
       } logged`;
       return { rows, meta };
