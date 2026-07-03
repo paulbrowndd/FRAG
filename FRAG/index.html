@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FRAG · Node War Stats</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-pattern" aria-hidden="true"></div>
+    <div class="led-ambient" aria-hidden="true"></div>
+
+    <div class="wrap">
+      <header class="site-header">
+        <div class="brand">
+          <div class="led-bar led-bar--brand" aria-hidden="true"></div>
+          <div class="brand-text">
+            <p class="brand-tag"><span class="brand-tag-led" aria-hidden="true"></span>FRAG</p>
+            <h1>Node War Stats</h1>
+            <p class="meta" id="header-meta">Node war result</p>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel panel--controls" aria-label="View and period">
+        <div class="tabs" role="tablist" aria-label="View mode">
+          <button type="button" class="tab tab--active" data-view="daily" role="tab" aria-selected="true">
+            Daily
+          </button>
+          <button type="button" class="tab" data-view="weekly" role="tab" aria-selected="false">
+            Weekly
+          </button>
+          <button type="button" class="tab" data-view="monthly" role="tab" aria-selected="false">
+            Monthly
+          </button>
+          <button type="button" class="tab" data-view="lifetime" role="tab" aria-selected="false">
+            Lifetime
+          </button>
+          <button type="button" class="tab" data-view="attendance" role="tab" aria-selected="false">
+            Attendance
+          </button>
+        </div>
+
+        <div id="scope-row" class="scope-row">
+          <div id="date-field" class="field">
+            <label for="date-select">War date</label>
+            <select id="date-select"></select>
+          </div>
+          <div id="week-field" class="field" hidden>
+            <label for="week-select">Week (Sun–Sat)</label>
+            <select id="week-select"></select>
+          </div>
+          <div id="month-field" class="field" hidden>
+            <label for="month-select">Month</label>
+            <select id="month-select"></select>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--toolbar" aria-label="Filters">
+        <label class="search" for="search">
+          <span class="visually-hidden">Filter by family name</span>
+          <input
+            type="search"
+            id="search"
+            placeholder="Search family name…"
+            autocomplete="off"
+          />
+        </label>
+        <span id="count" class="count"></span>
+      </section>
+
+      <div id="attendance-panel" class="attendance-panel panel" hidden></div>
+
+      <section id="mvp-section" class="mvp-section panel" hidden aria-labelledby="mvp-heading">
+        <div class="mvp-head">
+          <h2 id="mvp-heading" class="mvp-title">Monthly MVP</h2>
+          <p class="mvp-sub">
+            Weighted score from monthly totals. Best in guild per category earns full credit.
+          </p>
+        </div>
+        <div class="mvp-winner" id="mvp-winner"></div>
+        <dl id="mvp-breakdown" class="mvp-breakdown"></dl>
+        <ol id="mvp-leaderboard" class="mvp-leaderboard" aria-label="MVP score rankings"></ol>
+      </section>
+
+      <section id="defense-mvp-section" class="mvp-section mvp-section--defense panel" hidden aria-labelledby="defense-mvp-heading">
+        <div class="mvp-head">
+          <h2 id="defense-mvp-heading" class="mvp-title">Defense MVP</h2>
+          <p class="mvp-sub">
+            Defense team only. Weighted score from monthly totals. Best among Defense per category earns full credit.
+          </p>
+        </div>
+        <div class="mvp-winner" id="defense-mvp-winner"></div>
+        <dl id="defense-mvp-breakdown" class="mvp-breakdown"></dl>
+        <ol id="defense-mvp-leaderboard" class="mvp-leaderboard" aria-label="Defense MVP score rankings"></ol>
+
+        <div class="defense-wheel" id="defense-wheel-wrap">
+          <h3 class="defense-wheel-title">Defense Gift Card Wheel</h3>
+          <p class="defense-wheel-sub">
+            Each node war adds one entry; siege (Saturday) adds two. More entries = more slices = better odds.
+            Spin at month end to pick a gift card winner.
+          </p>
+          <p class="defense-wheel-tally" id="defense-wheel-tally"></p>
+          <div class="defense-wheel-stage">
+            <div class="defense-wheel-pointer" aria-hidden="true"></div>
+            <canvas id="defense-wheel-canvas" width="320" height="320" aria-hidden="true"></canvas>
+          </div>
+          <button type="button" id="defense-wheel-spin" class="defense-wheel-spin-btn">Spin for gift card</button>
+          <p class="defense-wheel-result" id="defense-wheel-result" hidden></p>
+        </div>
+      </section>
+
+      <div class="table-scroll panel panel--table" role="region" aria-label="Node war statistics table">
+        <table>
+          <thead>
+            <tr id="thead"></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+          <tfoot id="tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <script src="guild.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
